@@ -1,0 +1,2244 @@
+:root {
+    --color-bg-dark: #1A1423;
+    --color-bg-dark-alpha: #1a1423d1;
+    --color-text-dark: #1A1423;
+    --color-bg-panel: #3D314A;
+    --color-purple-dark: #534068;
+    --color-gradient-purple-1: #610fb8;
+    --color-gradient-purple-2: #654983;
+    --color-burgundy: #684756;
+    --color-gradient-purple-3: #7a00ff;
+    --color-purple: #9b59b6;
+    --color-gradient-purple-4: #9d73c2;
+    --color-gradient-purple-5: #9f61c5;
+    --color-primary: #AB8476;
+    --color-card-border: #C2BDC6;
+    --color-card-gradient-end: #CED1D2;
+    --color-card-gradient-mid: #D9E1E3;
+    --color-primary-light: #c8aa9f;
+    --color-red: #e74c3c;
+    --color-light: #ecf0f1;
+    --color-yellow: #f1c40f;
+    --color-orange: #f39c12;
+    --color-shadow-30: rgba(0, 0, 0, .3);
+    --color-shadow-10: rgba(0, 0, 0, 0.1);
+    --color-shadow-15: rgba(0, 0, 0, 0.15);
+    --color-shadow-20: rgba(0, 0, 0, 0.2);
+    --color-shadow-40: rgba(0, 0, 0, 0.4);
+    --color-shadow-50: rgba(0, 0, 0, 0.5);
+    --color-shadow-55: rgba(0, 0, 0, 0.55);
+    --color-shadow-70: rgba(0, 0, 0, 0.7);
+    --color-shadow-80: rgba(0, 0, 0, 0.8);
+    --color-purple-alpha-50: rgba(142, 68, 173, 0.5);
+    --color-purple-alpha-80: rgba(142, 68, 173, 0.8);
+    --color-yellow-alpha-20: rgba(241, 196, 15, 0.2);
+    --color-yellow-alpha-30: rgba(241, 196, 15, 0.3);
+    --color-yellow-alpha-40: rgba(241, 196, 15, 0.4);
+    --color-yellow-alpha-50: rgba(241, 196, 15, 0.5);
+    --color-yellow-alpha-60: rgba(241, 196, 15, 0.6);
+    --color-yellow-alpha-80: rgba(241, 196, 15, 0.8);
+    --color-white-alpha-10: rgba(255, 255, 255, 0.1);
+    --color-bg-dark-alpha-65: rgba(26, 20, 35, 0.65);
+    --color-bg-dark-alpha-95: rgba(26, 20, 35, 0.95);
+}
+
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Instrument Sans', sans-serif;
+}
+
+html,
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--color-bg-dark);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--color-light);
+    line-height: 1.6;
+    letter-spacing: .2px;
+    display: flex;
+    flex-direction: column;
+}
+
+h2 {
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--color-bg-dark);
+    font-weight: 600;
+    font-size: 1.4rem;
+    padding-bottom: 16px;
+}
+
+/* Full width header */
+.game-header {
+    position: relative;
+    /* Established for predictable absolute banner positioning */
+    width: 100vw;
+    height: 4rem;
+    background: var(--color-bg-dark);
+    border-bottom: 1px solid var(--color-bg-panel);
+    z-index: 2000;
+    /* Ensure header is always above cards */
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 .75rem 0 1.25rem;
+    position: relative;
+}
+
+.game-container {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Game Board */
+.game-board {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    /* prevent flex item from overflowing */
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg-dark);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.game-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+    font-size: 0.9rem;
+}
+
+/* Flipboard Score Styling */
+.score-container {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.team-score-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.team-label-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0;
+}
+
+.team-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.team-tally-crowns {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    min-height: 14px;
+    margin-top: 4px;
+}
+
+.tally-crown {
+    width: 14px;
+    height: 14px;
+    transition: all 0.3s ease;
+}
+
+.tally-crown path {
+    fill: var(--color-purple-dark);
+}
+
+.tally-crown.won path {
+    fill: var(--color-yellow);
+    /* Use the Fill version of the simple crown path */
+    d: path("M232,192H24a12,12,0,0,0,0,24H232a12,12,0,0,0,0-24ZM232,104a12,12,0,0,0-16.8-2.62L182.25,120,137.6,58.83a12,12,0,0,0-19.2,0L73.75,120,40.8,101.38A12,12,0,0,0,28.8,122.62l47.08,44.59A12,12,0,0,0,84,172h88a12,12,0,0,0,8.12-4.79l47.08-44.59A12,12,0,0,0,232,104Z");
+}
+
+.flipboard-score {
+    position: relative;
+    width: 2.25rem;
+    height: 2.5rem;
+    background: linear-gradient(180deg, var(--color-purple-dark) 0%, var(--color-purple-dark) 49%, var(--color-bg-panel) 50%, var(--color-bg-panel) 100%);
+    border-radius: 0.25rem;
+    box-shadow:
+        0 2px 4px var(--color-shadow-30),
+        inset 0 1px 0 var(--color-white-alpha-10),
+        inset 0 -1px 0 var(--color-shadow-30);
+    overflow: hidden;
+}
+
+.flipboard-score::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--color-bg-dark) 20%, var(--color-bg-dark) 80%, transparent 100%);
+    z-index: 2;
+    transform: translateY(-0.5px);
+}
+
+.score-digit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-light);
+    z-index: 1;
+    font-family: 'Instrument Sans', monospace;
+}
+
+/* ─── Player positions ──────────────────────────────────────────────────── */
+/* Player divs sit AT the edge. The .hand inside uses a negative margin       */
+/* to push the card fan outside the board; overflow:hidden on game-board      */
+/* clips it, giving the "cropped at the edge" look from the reference image.  */
+
+.player-position {
+    position: absolute;
+    display: flex;
+    align-items: center;
+}
+
+/* North — hand + info stacked vertically at top centre */
+.player-position.north {
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+    /* hand on top, info below */
+    z-index: 2000;
+    /* above deal-animation fixed cards (z-index: 1000) */
+}
+
+.player-position.north .hand {
+    margin-top: -2rem;
+    /* reduced from -3rem to maintain proportional edge-crop when scaled */
+    scale: 1.4;
+}
+
+/* South — info above the hand, hand peeks from the bottom edge */
+.player-position.south {
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column;
+    /* info on top, hand below */
+    align-items: center;
+    padding-bottom: 0;
+    z-index: 2000;
+    /* above deal-animation fixed cards (z-index: 1000) */
+}
+
+.player-position.south .hand {
+    margin-bottom: 0rem;
+    /* reduced from -3rem to maintain proportional edge-crop */
+    scale: 1.4;
+}
+
+/* Pull the whole south container up so the info label sits above the hand
+   with the same breathing room as north-info sits below the top edge.
+   The hand (170px) minus the crop (3rem≈48px) = ~122px visible peak.
+   We offset upward to give the info ~1rem of clear air above the hand edge. */
+.player-position.south .player-info {
+    margin-bottom: 0;
+    z-index: 20000;
+}
+
+/* West — spans full board height so 50% = board centre */
+.player-position.west {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.player-position.west .hand {
+    position: absolute;
+    left: calc(-3rem - 28px);
+    top: calc(50% - 85px);
+    transform: rotate(90deg);
+    scale: 1.4;
+}
+
+/* East — spans full board height so 50% = board centre */
+.player-position.east {
+    right: 0;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.player-position.east .hand {
+    position: absolute;
+    right: calc(-3rem - 28px);
+    top: calc(50% - 85px);
+    transform: rotate(-90deg);
+    scale: 1.4;
+}
+
+.player-info {
+    text-align: center;
+    margin: 0;
+    white-space: nowrap;
+    padding: 0.5rem;
+    position: relative;
+    z-index: 20000;
+}
+
+/* ── North & South — horizontal capsule pinned to top/bottom edge ─────────── */
+.player-position.north .player-info,
+.player-position.south .player-info {
+    position: absolute;
+    z-index: 20000;
+    background-color: var(--color-purple-dark);
+    width: max-content;
+    padding: 8px 16px;
+    height: auto;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 15px var(--color-shadow-50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.player-position.south .player-info {
+    border-radius: 4px 4px 0px 0px;
+}
+
+.player-position.north .player-name,
+.player-position.south .player-name {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.player-position.north .player-info {
+    top: 0px;
+}
+
+.player-position.south .player-info {
+    bottom: 0px;
+}
+
+/* ── West — vertical capsule pinned to left edge, text rotated 90° ─────────── */
+.player-position.west .player-info {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20000;
+    background-color: var(--color-burgundy);
+    padding: 8px 16px;
+    border-radius: 0px 4px 4px 0px;
+    box-shadow: -4px 0 15px var(--color-shadow-30);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateY(-50%);
+}
+
+/* ── East — vertical capsule pinned to right edge, text rotated 90° ────────── */
+.player-position.east .player-info {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 20000;
+    background-color: var(--color-burgundy);
+    padding: 8px 16px;
+    border-radius: 4px 0px 0px 4px;
+    box-shadow: -4px 0 15px var(--color-shadow-30);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* North & South Background Pulsing for Active Turn */
+@keyframes pulseNSBackground {
+
+    0%,
+    100% {
+        background-color: var(--color-purple-dark);
+        box-shadow: 0 4px 15px var(--color-shadow-50);
+    }
+
+    50% {
+        background-color: var(--color-yellow);
+        box-shadow: 0 0 20px var(--color-yellow-alpha-60);
+    }
+}
+
+.player-position.north .player-info:has(.turn-indicator.active) {
+    animation: pulseNSBackground 2s infinite alternate !important;
+}
+
+/* North Text Pulsing (complements the yellow background) */
+@keyframes pulseNSText {
+
+    0%,
+    100% {
+        color: var(--color-light);
+    }
+
+    50% {
+        color: var(--color-bg-dark);
+    }
+}
+
+.player-position.north:has(.turn-indicator.active) .player-name {
+    animation: pulseNSText 2s infinite alternate !important;
+    text-shadow: none !important;
+}
+
+/* East & West Background Pulsing — matches North/South style */
+.player-position.east .player-info:has(.turn-indicator.active),
+.player-position.west .player-info:has(.turn-indicator.active) {
+    animation: pulseNSBackground 2s infinite alternate !important;
+}
+
+.player-position.east:has(.turn-indicator.active) .player-name,
+.player-position.west:has(.turn-indicator.active) .player-name {
+    animation: pulseNSText 2s infinite alternate !important;
+    text-shadow: none !important;
+}
+
+/* Dealer badge */
+.dealer-badge {
+    font-size: 0.75rem;
+    background-color: var(--color-primary);
+    color: var(--color-bg-dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 600;
+    display: none;
+    /* Hidden by default */
+}
+
+.dealer-badge.active {
+    display: inline-block;
+}
+
+.maker-badge {
+    background-color: var(--color-light);
+    color: var(--color-bg-dark);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+    display: none;
+    animation: makerBadgePulse 2s infinite;
+    line-height: normal;
+}
+
+.maker-badge.active {
+    display: inline-block;
+}
+
+@keyframes makerBadgePulse {
+    0% {
+        box-shadow: 0 0 5px var(--color-purple-alpha-50);
+    }
+
+    50% {
+        box-shadow: 0 0 15px var(--color-purple-alpha-80);
+    }
+
+    100% {
+        box-shadow: 0 0 5px var(--color-purple-alpha-50);
+    }
+}
+
+/* Stack dealer badge vertically for West and East players */
+.player-position.west .dealer-badge,
+.player-position.east .dealer-badge {
+    display: none;
+    /* Hidden by default */
+    margin-top: 0;
+    margin-left: 4px;
+    transform: none;
+    width: auto;
+    padding: 4px 8px;
+    height: auto;
+    line-height: normal;
+}
+
+.player-position.west .dealer-badge.active,
+.player-position.east .dealer-badge.active {
+    display: inline-flex !important;
+    /* Use flex for proper centering */
+    justify-content: center;
+    align-items: center;
+}
+
+/* Stack maker badge vertically for West and East players as well */
+.player-position.west .maker-badge,
+.player-position.east .maker-badge {
+    margin-top: 0;
+    margin-left: 4px;
+}
+
+.player-position.west .maker-badge.active,
+.player-position.east .maker-badge.active {
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+/* West & East player name — inherits vertical writing-mode from parent .player-info */
+.player-position.west .player-name,
+.player-position.east .player-name {
+    display: flex;
+    color: var(--color-light);
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+}
+
+/* Trick tally marks */
+.trick-tally {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-left: 6px;
+    letter-spacing: 2px;
+}
+
+.trick-tally:empty {
+    display: none;
+    margin: 0;
+}
+
+
+/* Tricks won containers */
+.tricks-won {
+    position: absolute;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+/* Position trick containers relative to each player */
+.player-position.north .tricks-won {
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+}
+
+.player-position.south .tricks-won {
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: row;
+}
+
+.player-position.east .tricks-won {
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    max-width: 30px;
+}
+
+.player-position.west .tricks-won {
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+    max-width: 30px;
+}
+
+/* Trick cards in won piles */
+.tricks-won .card {
+    width: 2.3rem !important;
+    height: 3.2rem !important;
+    font-size: 0.6rem;
+    border-radius: 3px;
+    opacity: 0.8;
+}
+
+.tricks-won .card .card-value,
+.tricks-won .card .card-suit,
+.tricks-won .card .card-value-bottom,
+.tricks-won .card .card-suit-bottom {
+    font-size: 0.5rem;
+}
+
+/* Adjust bottom corner positions for small trick cards */
+.tricks-won .card .card-value-bottom {
+    bottom: 1rem;
+    right: 0.25rem;
+}
+
+.tricks-won .card .card-suit-bottom {
+    bottom: 0.25rem;
+    right: 0.25rem;
+}
+
+/* Center Play Area — fills the entire board so flex centering is always exact */
+.play-area {
+    position: absolute;
+    inset: 0;
+    /* fill the full game-board */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    /* let clicks pass through to board / hands */
+    z-index: 5;
+}
+
+/* trick-cards is the actual centre zone for played cards + deck */
+.trick-cards {
+    position: relative;
+    pointer-events: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 260px;
+    height: 260px;
+}
+
+/* Start Game button — shown during setup only */
+.start-game-btn {
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    width: 240px;
+    height: 56px;
+    border: solid 2px var(--color-purple-dark);
+    outline: none;
+    color: var(--color-light);
+    background: var(--color-bg-dark);
+    box-shadow: 0 8px 20px var(--color-bg-dark-alpha);
+    cursor: pointer;
+    position: absolute;
+    /* REQUIRED for layout */
+    z-index: 1000;
+    pointer-events: auto;
+    border-radius: 8px;
+}
+
+.start-game-btn.hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.3s ease-out;
+}
+
+.start-game-btn:before {
+    content: '';
+    background: linear-gradient(45deg, var(--color-gradient-purple-2), var(--color-gradient-purple-1), var(--color-gradient-purple-5), var(--color-purple-dark), var(--color-purple-dark), var(--color-gradient-purple-3), var(--color-gradient-purple-4), var(--color-purple-dark));
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 400%;
+    z-index: -1;
+    filter: blur(12px);
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    animation: glowing 20s linear infinite;
+    opacity: 0;
+    transition: opacity .3s ease-in-out;
+    border-radius: 8px;
+}
+
+.start-game-btn:active {
+    color: var(--color-bg-dark);
+}
+
+.start-game-btn:active:after {
+    background: transparent;
+}
+
+.start-game-btn:hover:before {
+    opacity: 1;
+}
+
+.start-game-btn:hover:after {
+    animation-play-state: paused;
+}
+
+.start-game-btn:after {
+    z-index: -1;
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    border-radius: 6px;
+    background: linear-gradient(60deg,
+            var(--color-bg-dark) 0%,
+            var(--color-bg-dark) 35%,
+            var(--color-bg-panel) 50%,
+            var(--color-bg-dark) 65%,
+            var(--color-bg-dark) 100%);
+    background-size: 300% 100%;
+    animation: btnPurpleShine 4s cubic-bezier(0.470, 0.000, 0.080, 1.000) infinite;
+}
+
+@keyframes btnPurpleShine {
+    0% {
+        background-position: 100% center;
+    }
+
+    50%,
+    100% {
+        background-position: 0% center;
+    }
+}
+
+@keyframes glowing {
+    0% {
+        background-position: 0 0;
+    }
+
+    50% {
+        background-position: 400% 0;
+    }
+
+    100% {
+        background-position: 0 0;
+    }
+}
+
+/* Dealer connection line */
+.dealer-connection-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.dealer-connection-line.active {
+    opacity: 1;
+}
+
+.dealer-connection-line path {
+    stroke-dashoffset: 0;
+    animation: dealerLineFlow 1s linear infinite;
+}
+
+@keyframes dealerLineFlow {
+    0% {
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        stroke-dashoffset: -12;
+    }
+}
+
+
+.trick-card {
+    position: absolute !important;
+    transition: all 0.3s ease;
+    transform: rotate(0deg) !important;
+    scale: 1.4;
+}
+
+/* Horizontal line positioning for trick cards in center */
+.trick-card.play-order-1 {
+    z-index: 1;
+    transform: translateX(-6rem) !important;
+}
+
+.trick-card.play-order-2 {
+    z-index: 2;
+    transform: translateX(-2rem) !important;
+}
+
+.trick-card.play-order-3 {
+    z-index: 3;
+    transform: translateX(2rem) !important;
+}
+
+.trick-card.play-order-4 {
+    z-index: 4;
+    transform: translateX(6rem) !important;
+}
+
+/* Trump Corner Icons */
+.trump-corner-icons {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 200;
+}
+
+.trump-icon {
+    position: absolute;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--color-primary) !important;
+
+}
+
+.trump-icon.top-left {
+    top: 0rem;
+    left: 0rem;
+}
+
+.trump-icon.top-right {
+    top: 0rem;
+    right: 0rem;
+}
+
+.trump-icon.bottom-left {
+    bottom: 0rem;
+    left: 0rem;
+}
+
+.trump-icon.bottom-right {
+    bottom: 0rem;
+    right: 0rem;
+}
+
+/* ─── Hand container & card fan ─────────────────────────────────────────── */
+
+/* Override any leftover flex from .hand.vertical — we use absolute cards.   */
+.hand,
+.hand.vertical {
+    position: relative;
+    width: 200px;
+    height: 170px;
+    /* no flex — cards are absolutely positioned inside */
+    display: block;
+    flex-direction: unset;
+    gap: unset;
+}
+
+/* ── Base card ────────────────────────────────────────────────────────────── */
+.card {
+    position: absolute;
+    left: 50%;
+    width: 6.05rem;
+    height: 8.47rem;
+    margin-left: -3.025rem;
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 50%, var(--color-card-gradient-end) 100%);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    color: var(--color-text-dark);
+    cursor: pointer;
+    box-shadow: 0 4px 12px var(--color-shadow-10);
+    border: 1px solid var(--color-card-border);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        box-shadow 0.3s ease;
+    /* Reset any old per-player overrides */
+    margin-top: 0;
+    z-index: var(--card-index, 10);
+}
+
+/* ── South (You) — fan opens upward, pivot at bottom ─────────────────────── */
+.player-position.south .card {
+    bottom: 0;
+    top: auto;
+    transform-origin: bottom center;
+}
+
+.player-position.south .hand .card:nth-child(1) {
+    transform: rotate(-48deg);
+    z-index: 10;
+}
+
+.player-position.south .hand .card:nth-child(2) {
+    transform: rotate(-24deg);
+    z-index: 11;
+}
+
+.player-position.south .hand .card:nth-child(3) {
+    transform: rotate(0deg);
+    z-index: 12;
+}
+
+.player-position.south .hand .card:nth-child(4) {
+    transform: rotate(24deg);
+    z-index: 13;
+}
+
+.player-position.south .hand .card:nth-child(5) {
+    transform: rotate(48deg);
+    z-index: 14;
+}
+
+.player-position.south .card:hover {
+    box-shadow: 0 18px 36px var(--color-shadow-55);
+}
+
+/* South card hover transform is handled by JS mouseenter/mouseleave for accuracy */
+
+/* ── North (Teammate) — fan opens downward, pivot at top ─────────────────── */
+.player-position.north .card {
+    top: 0;
+    bottom: auto;
+    transform-origin: top center;
+}
+
+.player-position.north .hand .card:nth-child(1) {
+    transform: rotate(24deg);
+    z-index: 10;
+}
+
+.player-position.north .hand .card:nth-child(2) {
+    transform: rotate(12deg);
+    z-index: 11;
+}
+
+.player-position.north .hand .card:nth-child(3) {
+    transform: rotate(0deg);
+    z-index: 12;
+}
+
+.player-position.north .hand .card:nth-child(4) {
+    transform: rotate(-12deg);
+    z-index: 13;
+}
+
+.player-position.north .hand .card:nth-child(5) {
+    transform: rotate(-24deg);
+    z-index: 14;
+}
+
+/* ── West (Fucker 1) — container rotated 90°, fan faces right ────────────── */
+.player-position.west .card {
+    bottom: 0;
+    top: auto;
+    transform-origin: bottom center;
+    /* reset any old mobile-stacking margin */
+    margin-top: 0;
+}
+
+.player-position.west .hand .card:nth-child(1) {
+    transform: rotate(-24deg);
+    z-index: 10;
+}
+
+.player-position.west .hand .card:nth-child(2) {
+    transform: rotate(-12deg);
+    z-index: 11;
+}
+
+.player-position.west .hand .card:nth-child(3) {
+    transform: rotate(0deg);
+    z-index: 12;
+}
+
+.player-position.west .hand .card:nth-child(4) {
+    transform: rotate(12deg);
+    z-index: 13;
+}
+
+.player-position.west .hand .card:nth-child(5) {
+    transform: rotate(24deg);
+    z-index: 14;
+}
+
+/* ── East (Fucker 2) — container rotated -90°, fan faces left ───────────── */
+.player-position.east .card {
+    bottom: 0;
+    top: auto;
+    transform-origin: bottom center;
+    margin-top: 0;
+}
+
+.player-position.east .hand .card:nth-child(1) {
+    transform: rotate(-24deg);
+    z-index: 10;
+}
+
+.player-position.east .hand .card:nth-child(2) {
+    transform: rotate(-12deg);
+    z-index: 11;
+}
+
+.player-position.east .hand .card:nth-child(3) {
+    transform: rotate(0deg);
+    z-index: 12;
+}
+
+.player-position.east .hand .card:nth-child(4) {
+    transform: rotate(12deg);
+    z-index: 13;
+}
+
+.player-position.east .hand .card:nth-child(5) {
+    transform: rotate(24deg);
+    z-index: 14;
+}
+
+
+/* Trump card highlighting — only visible in Beginner Mode */
+body.beginner-mode .card.is-trump {
+    border: 2px solid var(--color-yellow) !important;
+    box-shadow:
+        inset 0 0 15px var(--color-yellow-alpha-20),
+        0 4px 12px var(--color-yellow-alpha-30) !important;
+}
+
+body.beginner-mode .card.is-trump:hover {
+    box-shadow:
+        inset 0 0 20px var(--color-yellow-alpha-40),
+        0 12px 25px var(--color-yellow-alpha-50) !important;
+}
+
+/* Trump pickup highlight for dealer */
+.card.trump-pickup {
+    border: 3px solid var(--color-yellow) !important;
+    animation: trumpPickupPulse 1.5s infinite;
+}
+
+@keyframes trumpPickupPulse {
+    0% {
+        box-shadow: 0 0 10px var(--color-yellow);
+    }
+
+    50% {
+        box-shadow: 0 0 25px var(--color-yellow);
+    }
+
+    100% {
+        box-shadow: 0 0 10px var(--color-yellow);
+    }
+}
+
+/* Subtle paper texture */
+.card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/></svg>');
+    opacity: 0.8;
+    pointer-events: none;
+    border-radius: 7px;
+    z-index: 1;
+}
+
+.card>* {
+    z-index: 2;
+    /* keep text above texture */
+    position: relative;
+}
+
+/* Remove ALL hover effects and transitions for computer players */
+.player-position.north .card,
+.player-position.east .card,
+.player-position.west .card {
+    cursor: default !important;
+    pointer-events: none !important;
+    box-shadow: 0 0 12px var(--color-shadow-70) !important;
+}
+
+/* Ensure card backs never have hover effects anywhere */
+.card.card-back:hover {
+    box-shadow: 0 2px 4px var(--color-shadow-20),
+        inset 0 1px 2px var(--color-white-alpha-10) !important;
+    z-index: auto !important;
+    cursor: default !important;
+}
+
+.card.card-back {
+    background-color: var(--color-purple-dark);
+    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%),
+        radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
+    background-size: 16px 16px;
+    background-position: 0 0, 40px 40px;
+    opacity: 1 !important;
+    color: var(--color-bg-dark);
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    position: absolute;
+    /* MUST match .card — needed for fan layout */
+    overflow: hidden;
+    border: 1px solid var(--color-light);
+}
+
+/* Add a subtle pattern overlay */
+.card.card-back::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.card.dealing {
+    animation: dealCard 0.5s ease-out;
+    box-shadow: 0 2px 8px var(--color-shadow-20) !important;
+    /* Restore normal shadow when dealing */
+}
+
+.card.playing {
+    animation: playCard 0.8s ease-out;
+    z-index: 20;
+}
+
+/* Animation styles for cards moving to center */
+.card.animating {
+    z-index: 1000 !important;
+    box-shadow: 0 8px 25px var(--color-shadow-40) !important;
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* Center deck pile — non-interactive; Start Game button is the entry point */
+.center-deck {
+    position: relative;
+    width: 6.05rem;
+    height: 8.47rem;
+    margin: 0 auto;
+    cursor: default;
+    pointer-events: none;
+    transform: scale(1.4);
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s ease-in;
+}
+
+.center-deck.animate-offscreen {
+    transform: scale(0.5) translate(-150vw, -150vh) rotate(180deg);
+    opacity: 0;
+    z-index: 0;
+}
+
+
+
+/* Minimal shadow for stacked deck cards to avoid heavy cumulative shadow */
+.center-deck .card {
+    box-shadow: 0 0.5px 1px var(--color-shadow-15) !important;
+    transition: opacity 0.2s ease-out;
+}
+
+/* Even lighter shadow for middle deck cards, slightly more for top card */
+.center-deck .deck-card {
+    border: 1px solid var(--color-light);
+    box-shadow: 0 0.25px 0.5px var(--color-shadow-10) !important;
+}
+
+/* Top deck card gets a slightly more defined shadow */
+.center-deck .deck-card:last-child {
+    box-shadow: 0 1px 3px var(--color-shadow-20) !important;
+}
+
+/* Trump candidate styling in center */
+.trump-candidate-card {
+    border: 2px solid var(--color-yellow) !important;
+    transform: scale(1) !important;
+    /* Scale up by 25% while it's a candidate */
+    z-index: 50 !important;
+    /* Ensure it appears above other cards */
+}
+
+.trump-candidate-card::before {
+    content: "Trump Candidate";
+    position: absolute;
+    top: -32px;
+    /* explicit override of background stretching */
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    background-color: var(--color-yellow);
+    color: var(--color-bg-dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: .6rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 1;
+    /* override any conflicting transparency */
+    background-image: none;
+    /* remove any conflicting patterns */
+}
+
+
+/* Rule Violation Popup */
+.rule-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2000;
+    display: none;
+}
+
+.rule-popup-content {
+    background-color: var(--color-red);
+    color: var(--color-light);
+    padding: 8px 16px;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px var(--color-shadow-40);
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    animation: popupBounce 0.5s ease-out;
+}
+
+@keyframes popupBounce {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* AI Decision Popup */
+/* All AI decision popups appear centered on the game board */
+.ai-decision-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    display: none;
+}
+
+/* All per-player variants use the same centered position */
+.ai-decision-popup.west-player,
+.ai-decision-popup.east-player,
+.ai-decision-popup.north-player {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ai-decision-content {
+    background-color: var(--color-primary);
+    color: var(--color-bg-dark);
+    padding: 12px 16px;
+    border-radius: 10px;
+    box-shadow: 0 8px 25px var(--color-shadow-40);
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    animation: aiDecisionSlide 0.4s ease-out;
+}
+
+@keyframes aiDecisionSlide {
+    0% {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* User Turn Dialog */
+.user-turn-dialog {
+    position: fixed;
+    top: auto;
+    bottom: 12rem;
+    /* ~2rem above the scaled south hand peak */
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    z-index: 2500;
+    animation: slideUpDialog 0.3s ease-out;
+}
+
+.user-turn-content {
+    background-color: var(--color-primary);
+    color: var(--color-bg-dark);
+    padding: 8px 8px 8px 12px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px var(--color-shadow-40);
+    max-width: 1000px;
+    /* Increased to accommodate longer single-line text */
+    min-width: 300px;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    position: relative;
+}
+
+
+
+.dialog-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+#user-turn-title {
+    font-size: 1rem;
+    margin: 0;
+    color: var(--color-bg-dark);
+    font-weight: 700;
+}
+
+#user-turn-message {
+    font-size: 1rem;
+    margin: 0;
+    color: var(--color-bg-dark);
+    font-weight: 500;
+}
+
+/* Dialog Action Buttons */
+.dialog-actions {
+    display: none;
+    flex-shrink: 0;
+}
+
+.dialog-actions.show {
+    display: flex;
+    align-items: center;
+    margin-left: 3rem;
+    gap: 8px;
+}
+
+.dialog-btn {
+    background-color: var(--color-bg-dark);
+    color: var(--color-light);
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    white-space: nowrap;
+}
+
+.dialog-btn:hover {
+    background-color: var(--color-orange);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--color-shadow-30);
+}
+
+.dialog-btn.order-up-btn {
+    background-color: var(--color-bg-dark);
+    color: var(--color-light);
+}
+
+.dialog-btn.order-up-btn:hover {
+    background-color: var(--color-bg-dark);
+}
+
+.dialog-btn.pass-btn {
+    background-color: var(--color-primary);
+    color: var(--color-bg-dark);
+}
+
+.dialog-btn.pass-btn:hover {
+    background-color: var(--color-primary-light);
+}
+
+.dialog-btn.alone-btn {
+    background-color: var(--color-primary);
+    box-shadow: inset 0 0 0 2px var(--color-bg-dark);
+    color: var(--color-bg-dark);
+    font-weight: 600;
+}
+
+.dialog-btn.alone-btn:hover {
+    box-shadow: inset 0 0 0 2px var(--color-bg-dark);
+}
+
+/* Suit Selection Cards */
+.suit-selection {
+    display: none;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.suit-selection.show {
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+}
+
+.suit-card {
+    background-color: var(--color-light);
+    border-radius: 8px;
+    padding: 0px 0px 6px 0px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px var(--color-shadow-20);
+    width: 80px;
+    text-align: center;
+}
+
+.suit-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px var(--color-shadow-30);
+}
+
+.suit-card[data-suit="hearts"] .suit-symbol,
+.suit-card[data-suit="diamonds"] .suit-symbol {
+    color: var(--color-red);
+}
+
+.suit-card[data-suit="clubs"] .suit-symbol,
+.suit-card[data-suit="spades"] .suit-symbol {
+    color: var(--color-text-dark);
+}
+
+.suit-symbol {
+    font-size: 1.5rem;
+    height: 32px;
+}
+
+.suit-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+}
+
+@keyframes fadeInDialog {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUpDialog {
+    0% {
+        transform: translateX(-50%) translateY(30px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInDialog {
+    0% {
+        transform: scale(0.8) translateY(-50px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes dealCard {
+    0% {
+        transform: translateX(-200px) translateY(-200px) rotate(180deg);
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes playCard {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Deal card animations for each position */
+.player-position.south .card.dealing {
+    animation: dealCardSouth 0.5s ease-out;
+}
+
+.player-position.north .card.dealing {
+    animation: dealCardNorth 0.5s ease-out;
+}
+
+.player-position.east .card.dealing {
+    animation: dealCardEast 0.5s ease-out;
+}
+
+.player-position.west .card.dealing {
+    animation: dealCardWest 0.5s ease-out;
+}
+
+@keyframes dealCardSouth {
+    0% {
+        transform: translateX(-200px) translateY(-200px) rotate(180deg);
+        opacity: 0;
+    }
+
+    100% {
+        transform: rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes dealCardNorth {
+    0% {
+        transform: translateX(-200px) translateY(-200px) rotate(0deg);
+        opacity: 0;
+    }
+
+    100% {
+        transform: rotate(180deg);
+        opacity: 1;
+    }
+}
+
+@keyframes dealCardEast {
+    0% {
+        transform: translateX(-200px) translateY(-200px) rotate(0deg);
+        opacity: 0;
+    }
+
+    100% {
+        transform: rotate(90deg);
+        opacity: 1;
+    }
+}
+
+@keyframes dealCardWest {
+    0% {
+        transform: translateX(-200px) translateY(-200px) rotate(0deg);
+        opacity: 0;
+    }
+
+    100% {
+        transform: rotate(-90deg);
+        opacity: 1;
+    }
+}
+
+.card.red {
+    color: var(--color-red);
+}
+
+.card.black {
+    color: var(--color-text-dark);
+}
+
+/* Trump pickup card styling */
+.card.trump-pickup {
+    border: 3px solid var(--color-yellow);
+    box-shadow: 0 0 15px var(--color-yellow-alpha-60);
+    position: absolute !important;
+    left: 100%;
+    margin-left: 2rem;
+    transform: rotate(15deg) translateY(-1rem);
+    z-index: 100;
+}
+
+.card.trump-pickup:hover {
+    transform: rotate(15deg) translateY(-2rem) scale(1.05) !important;
+    box-shadow: 0 0 20px var(--color-yellow-alpha-80);
+}
+
+.card-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1;
+    padding-left: 2px;
+}
+
+.card-suit {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+/* Bottom-right corner elements */
+.card-value-bottom,
+.card-suit-bottom {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    transform: rotate(180deg);
+}
+
+.card-value-bottom {
+    font-size: 1.2rem;
+    font-weight: bold;
+    line-height: 1;
+    bottom: 0.5rem;
+    /* Positioned below the suit when rotated */
+}
+
+.card-suit-bottom {
+    font-size: 1.4rem;
+    line-height: 1;
+    bottom: 1.7rem;
+    /* Positioned above the value when rotated */
+}
+
+/* Game message in header - centered and auto-width */
+.game-message-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--color-bg-dark);
+    border-radius: 4px;
+    border: 1px solid var(--color-yellow-alpha-30);
+    white-space: nowrap;
+}
+
+#message {
+    margin: 0;
+    font-size: 1rem;
+    min-height: 20px;
+    color: var(--color-primary);
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+/* Responsive Design */
+
+/* Responsive Design */
+@media (max-width: 1250px) {
+
+    .game-message-container {
+        z-index: 1000;
+        background-color: var(--color-bg-dark-alpha-95);
+        box-shadow: 0 4px 10px var(--color-shadow-50);
+        border: 1px solid var(--color-white-alpha-10);
+        padding: 8px 16px;
+        border-radius: 8px;
+        transform: translateX(-50%);
+    }
+
+    #message {
+        white-space: normal;
+    }
+
+}
+
+@media (max-width: 900px) {
+
+    /* At tablet widths, reduce the trick card spread so it fits horizontally */
+    .trick-card.play-order-1 {
+        transform: translateX(-4rem) !important;
+    }
+
+    .trick-card.play-order-2 {
+        transform: translateX(-1.5rem) !important;
+    }
+
+    .trick-card.play-order-3 {
+        transform: translateX(1.5rem) !important;
+    }
+
+    .trick-card.play-order-4 {
+        transform: translateX(4rem) !important;
+    }
+
+    /* Hide game message container on tablet/small screens */
+    .game-message-container {
+        display: none !important;
+    }
+
+    /* Swap "Your Team" → "You" and "Opponents" → "Them" on small screens */
+    .responsive-label {
+        font-size: 0;
+        /* hide the original text node */
+        line-height: 0;
+    }
+
+    .responsive-label::before {
+        font-size: 0.7rem;
+        /* restore legible size for the pseudo-content */
+        line-height: normal;
+        content: attr(data-short);
+    }
+
+}
+
+@media (max-width: 768px) {
+
+    /* Keep score labels visible and sizes consistent */
+    .team-label {
+        display: inline-block;
+    }
+
+    .score-container {
+        gap: 1.5rem;
+        /* desktop gap */
+    }
+
+    .flipboard-score {
+        width: 2.25rem;
+        /* desktop width */
+        height: 2.5rem;
+        /* desktop height */
+    }
+
+    .score-digit {
+        font-size: 1.5rem;
+        /* desktop font-size */
+    }
+
+    .card {
+        width: 80px;
+        height: 120px;
+        font-size: 1rem;
+    }
+
+    .card-suit {
+        font-size: 1.2rem;
+    }
+
+    .card-value {
+        font-size: 0.9rem;
+    }
+
+    .card-value-bottom {
+        font-size: 0.9rem;
+    }
+
+    .trump-card {
+        width: 55px;
+        height: 82.5px;
+        font-size: 1.2rem;
+    }
+
+    /* Trick Cards Spread */
+    .trick-card.play-order-1 {
+        transform: translateX(-2.5rem) !important;
+        z-index: 1;
+    }
+
+    .trick-card.play-order-2 {
+        transform: translateX(-0.8rem) !important;
+        z-index: 2;
+    }
+
+    .trick-card.play-order-3 {
+        transform: translateX(0.8rem) !important;
+        z-index: 3;
+    }
+
+    .trick-card.play-order-4 {
+        transform: translateX(2.5rem) !important;
+        z-index: 4;
+    }
+
+    /* Hand overlap adjustments */
+    .hand {
+        gap: -15px;
+    }
+
+    .player-position.south .hand .card:not(.card-back):nth-child(1):hover {
+        transform: rotate(-48deg) translateY(-5px) scale(1.0) !important;
+    }
+
+    .player-position.south .hand .card:not(.card-back):nth-child(2):hover {
+        transform: rotate(-24deg) translateY(-5px) scale(1.0) !important;
+    }
+
+    .player-position.south .hand .card:not(.card-back):nth-child(3):hover {
+        transform: rotate(0deg) translateY(-5px) scale(1.0) !important;
+    }
+
+    .player-position.south .hand .card:not(.card-back):nth-child(4):hover {
+        transform: rotate(24deg) translateY(-5px) scale(1.0) !important;
+    }
+
+    .player-position.south .hand .card:not(.card-back):nth-child(5):hover {
+        transform: rotate(48deg) translateY(-5px) scale(1.0) !important;
+    }
+
+    /* Vertical hand negative overlap increased */
+    .player-position.west .card,
+    .player-position.east .card {
+        margin-top: -3.5rem;
+    }
+
+    .player-name {
+        font-size: 1rem;
+    }
+
+
+
+    /* Fix user turn dialog overflow */
+    .user-turn-content {
+        padding: 10px;
+        min-width: 90vw;
+        max-width: 95vw;
+        white-space: normal;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dialog-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        gap: 5px;
+    }
+
+    .dialog-btn {
+        padding: 5px 12px;
+        font-size: 0.9rem;
+    }
+
+    .euchred-overlay.team-you h1,
+    .euchred-overlay.team-opponent h1 {
+        font-size: 4rem;
+        text-align: center;
+    }
+
+    .euchred-overlay p {
+        font-size: 1.3rem;
+    }
+
+    .dialog-actions.show {
+        display: flex;
+        align-items: center;
+        margin-left: 0rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        width: 44px;
+        height: 66px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .card-suit {
+        font-size: 1rem;
+    }
+
+    /* Push side players slightly further against edge */
+    .player-position.west {
+        left: 0px;
+    }
+
+    .player-position.east {
+        right: 0px;
+    }
+
+    .player-position.north {
+        top: 0.5rem;
+    }
+
+    .player-position.south {
+        bottom: 0.5rem;
+    }
+
+    .trick-card.play-order-1 {
+        transform: translateX(-2.2rem) !important;
+    }
+
+    .trick-card.play-order-4 {
+        transform: translateX(2.2rem) !important;
+    }
+}
+
+/* Settings Button */
+.settings-btn {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 0;
+    padding: 8px;
+    transition: transform 0.2s;
+}
+
+.settings-btn:hover {
+    transform: rotate(90deg);
+    background: transparent;
+}
+
+/* Settings Modal */
+.settings-modal {
+    font-family: 'Instrument Sans', sans-serif;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--color-primary);
+    padding: 1.4rem 2rem 2rem 2rem;
+    border-radius: 16px;
+    z-index: 30000;
+    box-shadow: 0 8px 32px var(--color-shadow-40);
+    color: var(--color-bg-dark);
+    width: 360px;
+    text-align: center;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--color-bg-dark);
+    opacity: 0.5;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+    line-height: 1;
+}
+
+.modal-close-btn i {
+    font-size: 1.15rem;
+    display: block;
+}
+
+.modal-close-btn:hover {
+    opacity: 1;
+    background-color: var(--color-bg-dark-alpha-65);
+    color: var(--color-light);
+}
+
+.setting-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+}
+
+.setting-description {
+    width: 100%;
+    font-size: 0.9rem;
+    line-height: 130%;
+    color: var(--color-bg-dark-alpha-95);
+    margin-top: 4px;
+    font-weight: 400;
+    text-align: left;
+}
+
+.setting-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: var(--color-bg-dark);
+    color: var(--color-primary);
+    border: none;
+    border-radius: 4px;
+    padding: 8px 32px 8px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23AB8476%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px auto;
+}
+
+.setting-group label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+#close-settings-btn {
+    background-color: var(--color-bg-dark);
+    color: var(--color-primary);
+    border: none;
+    border-radius: 4px;
+    padding: 12px 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    height: auto;
+}
+
+#close-settings-btn:hover {
+    background-color: var(--color-purple-dark);
+    color: var(--color-card-gradient-mid);
+    font-weight: 600;
+}
+
+/* Switch styling for checkbox */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--color-light);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: var(--color-bg-dark);
+    -webkit-transition: .4s;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: var(--color-bg-dark);
+}
+
+input:checked+.slider:before {
+    -webkit-transform: translateX(26px);
+    -ms-transform: translateX(26px);
+    transform: translateX(26px);
+    background-color: var(--color-light);
+}
+
+.slider.round {
+    border-radius: 24px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Euchred Overlay */
+.euchred-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--color-shadow-80);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.euchred-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.euchred-gif {
+    max-width: 300px;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px var(--color-shadow-50);
+    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#euchred-continue-btn {
+    margin-top: 30px;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    animation: slideUp 0.8s ease;
+    background-color: #3D314A;
+}
+
+.euchred-overlay.team-you h1 {
+    color: var(--color-yellow);
+    font-size: 6rem;
+    text-shadow: 0 0 20px var(--color-orange);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.euchred-overlay.team-opponent h1 {
+    color: var(--color-red);
+    font-size: 6rem;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.euchred-overlay p {
+    font-size: 2rem;
+    color: var(--color-light);
+    margin-top: 10px;
+    animation: slideUp 0.7s ease;
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    80% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    0% {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Game Won Overlay */
+.game-won-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: var(--color-shadow-80);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+.game-won-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.game-won-gif {
+    max-width: 400px;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px var(--color-shadow-50);
+    animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#game-won-continue-btn {
+    margin-top: 30px;
+    padding: 12px 30px;
+    font-size: 1.2rem;
+    animation: slideUp 0.8s ease;
+    background-color: #3D314A;
+}
+
+.game-won-overlay h1 {
+    color: var(--color-yellow);
+    font-size: 6rem;
+    text-shadow: 0 0 20px var(--color-orange);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.game-won-overlay p {
+    font-size: 2rem;
+    color: var(--color-light);
+    margin-top: 10px;
+    animation: slideUp 0.7s ease;
+}
