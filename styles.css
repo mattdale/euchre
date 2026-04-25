@@ -54,6 +54,7 @@ html,
 body {
     width: 100vw;
     height: 100vh;
+    height: 100dvh; /* Dynamic viewport height — accounts for iOS browser chrome */
     overflow: hidden;
     background-color: var(--color-bg-dark);
 }
@@ -1895,6 +1896,79 @@ body.beginner-mode .card.is-trump:hover {
 
 @media (max-width: 480px) {
 
+    /* ═══ iOS Viewport Fix ═══ */
+    html, body {
+        height: 100vh;
+        height: 100dvh;
+    }
+
+    /* ═══ Header — much shorter on mobile ═══ */
+    .game-header {
+        height: 2.5rem;
+    }
+
+    .header-content {
+        padding: 0 0.5rem;
+    }
+
+    h1 {
+        font-size: 1rem;
+    }
+
+    /* ═══ Score area — compact ═══ */
+    .score-container {
+        gap: 0.4rem;
+    }
+
+    .team-score-section {
+        gap: 0.2rem;
+    }
+
+    .team-label {
+        font-size: 0.5rem;
+    }
+
+    .tally-crown {
+        width: 8px !important;
+        height: 8px !important;
+    }
+
+    .team-tally-crowns {
+        gap: 1px !important;
+    }
+
+    .flipboard-score {
+        width: 1.4rem;
+        height: 1.6rem;
+        border-radius: 2px;
+    }
+
+    .score-digit {
+        font-size: 0.9rem;
+    }
+
+    /* ═══ Settings gear — smaller ═══ */
+    .settings-btn {
+        font-size: 0.7rem;
+        padding: 2px;
+    }
+
+    .settings-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* ═══ Game message — above player info ═══ */
+    .game-message-container {
+        max-width: 60vw;
+        padding: 3px 8px;
+    }
+
+    #message {
+        font-size: 0.65rem;
+        white-space: normal;
+    }
+
     /* ═══ Game Board ═══ */
     .game-board {
         overflow: hidden;
@@ -1922,10 +1996,33 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.5rem;
     }
 
+    /* ═══ Center Deck — scale down and ensure centered ═══ */
+    .center-deck {
+        transform: scale(0.85);
+        margin: 0 auto;
+    }
+
+    .play-area {
+        align-items: center;
+        justify-content: center;
+    }
+
+    .trick-cards {
+        width: 180px;
+        height: 180px;
+    }
+
+    /* ═══ Start Game button ═══ */
+    .start-game-btn {
+        font-size: 1.1rem;
+        width: 180px;
+        height: 44px;
+    }
+
     /* ═══ Hand Scaling — remove the 1.4x scale on mobile ═══ */
     .player-position.north .hand {
         scale: 1;
-        margin-top: -1rem;
+        margin-top: -1.2rem;
     }
 
     .player-position.south .hand {
@@ -1935,14 +2032,14 @@ body.beginner-mode .card.is-trump:hover {
 
     .player-position.west .hand {
         scale: 1;
-        left: calc(-2rem - 10px);
-        top: calc(50% - 50px);
+        left: calc(-1.5rem - 10px);
+        top: calc(50% - 45px);
     }
 
     .player-position.east .hand {
         scale: 1;
-        right: calc(-2rem - 10px);
-        top: calc(50% - 50px);
+        right: calc(-1.5rem - 10px);
+        top: calc(50% - 45px);
     }
 
     /* ═══ Player position adjustments ═══ */
@@ -1965,113 +2062,87 @@ body.beginner-mode .card.is-trump:hover {
     /* ═══ Vertical hand card overlap — tighter on mobile ═══ */
     .player-position.west .card,
     .player-position.east .card {
-        margin-top: -2.5rem;
+        margin-top: -2.8rem;
     }
 
     /* ═══ Player Info — compact on mobile ═══ */
     .player-info {
-        padding: 4px 8px;
+        padding: 3px 6px;
     }
 
     .player-position.north .player-info,
     .player-position.south .player-info {
-        padding: 4px 10px;
+        padding: 3px 8px;
     }
 
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 4px 8px;
+        padding: 3px 6px;
     }
 
     .player-name {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     /* ═══ Badges — stack vertically on mobile ═══ */
     .player-position.north .player-name,
     .player-position.south .player-name {
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
     }
 
     .player-position.west .player-name,
     .player-position.east .player-name {
         flex-direction: column;
-        gap: 3px;
+        gap: 2px;
     }
 
     .dealer-badge,
     .maker-badge {
-        font-size: 0.6rem;
-        padding: 2px 5px;
+        font-size: 0.55rem;
+        padding: 1px 4px;
         margin-left: 0;
+    }
+
+    /* ═══ Trump corner icons — much smaller ═══ */
+    .trump-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 1.2rem;
     }
 
     /* ═══ Trump card — smaller ═══ */
     .trump-card {
-        width: 40px;
-        height: 60px;
-        font-size: 0.8rem;
+        width: 36px;
+        height: 54px;
+        font-size: 0.7rem;
     }
 
     /* ═══ Trick cards — tighter spread ═══ */
     .trick-card.play-order-1 {
-        transform: translateX(-1.5rem) !important;
+        transform: translateX(-1.2rem) !important;
     }
 
     .trick-card.play-order-2 {
-        transform: translateX(-0.5rem) !important;
+        transform: translateX(-0.4rem) !important;
     }
 
     .trick-card.play-order-3 {
-        transform: translateX(0.5rem) !important;
+        transform: translateX(0.4rem) !important;
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(1.5rem) !important;
+        transform: translateX(1.2rem) !important;
     }
 
     /* ═══ Trick tallies — smaller ═══ */
     .trick-tally {
-        gap: 2px;
+        gap: 1px;
     }
 
     .trick-tally svg {
-        width: 10px;
-        height: 10px;
-    }
-
-    /* ═══ Score area ═══ */
-    .score-container {
-        gap: 0.75rem;
-    }
-
-    .flipboard-score {
-        width: 1.75rem;
-        height: 2rem;
-    }
-
-    .score-digit {
-        font-size: 1.1rem;
-    }
-
-    h1 {
-        font-size: 1.2rem;
-    }
-
-    .team-label {
-        font-size: 0.6rem;
-    }
-
-    /* ═══ Game message ═══ */
-    #message {
-        font-size: 0.75rem;
-        white-space: normal;
-    }
-
-    .game-message-container {
-        max-width: 70vw;
-        padding: 4px 10px;
+        width: 8px;
+        height: 8px;
     }
 
     /* ═══ South hand hover — disable rotation scale on mobile ═══ */
@@ -2093,24 +2164,25 @@ body.beginner-mode .card.is-trump:hover {
     .user-turn-content {
         min-width: 85vw;
         max-width: 90vw;
-        padding: 8px;
+        padding: 6px;
     }
 
     .dialog-btn {
         padding: 4px 10px;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
     }
 
     /* ═══ AI decision bubble ═══ */
     .ai-decision-bubble {
-        font-size: 0.7rem;
-        padding: 4px 8px;
+        font-size: 0.65rem;
+        padding: 3px 6px;
     }
 
-    /* ═══ Settings button ═══ */
-    .settings-btn {
-        font-size: 0.8rem;
-        padding: 4px;
+    /* ═══ Settings modal — fit mobile screen ═══ */
+    .settings-modal {
+        width: 90vw;
+        max-width: 320px;
+        padding: 1rem 1.2rem;
     }
 }
 
