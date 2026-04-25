@@ -1667,6 +1667,7 @@ body.beginner-mode .card.is-trump:hover {
     border-radius: 4px;
     border: 1px solid var(--color-yellow-alpha-30);
     white-space: nowrap;
+    z-index: 25000; /* Above player-info (20000) */
 }
 
 #message {
@@ -1687,7 +1688,7 @@ body.beginner-mode .card.is-trump:hover {
 @media (max-width: 1250px) {
 
     .game-message-container {
-        z-index: 1000;
+        z-index: 25000;
         background-color: var(--color-bg-dark-alpha-95);
         box-shadow: 0 4px 10px var(--color-shadow-50);
         border: 1px solid var(--color-white-alpha-10);
@@ -1721,9 +1722,14 @@ body.beginner-mode .card.is-trump:hover {
         transform: translateX(4rem) !important;
     }
 
-    /* Hide game message container on tablet/small screens */
+    /* Make game message container more prominent on smaller screens */
     .game-message-container {
-        display: none !important;
+        z-index: 25000;
+        background-color: var(--color-bg-dark-alpha-95);
+        box-shadow: 0 4px 10px var(--color-shadow-50);
+        border: 1px solid var(--color-white-alpha-10);
+        padding: 6px 14px;
+        border-radius: 8px;
     }
 
     /* Swap "Your Team" → "You" and "Opponents" → "Them" on small screens */
@@ -1888,40 +1894,223 @@ body.beginner-mode .card.is-trump:hover {
 }
 
 @media (max-width: 480px) {
+
+    /* ═══ Game Board ═══ */
+    .game-board {
+        overflow: hidden;
+    }
+
+    /* ═══ Cards — much smaller on mobile ═══ */
     .card {
-        width: 44px;
-        height: 66px;
+        width: 38px;
+        height: 57px;
         border-radius: 4px;
-        font-size: 0.8rem;
+        font-size: 0.65rem;
+        padding: 2px 3px;
     }
 
     .card-suit {
-        font-size: 1rem;
+        font-size: 0.7rem;
     }
 
-    /* Push side players slightly further against edge */
-    .player-position.west {
-        left: 0px;
+    .card-value,
+    .card-value-bottom {
+        font-size: 0.55rem;
     }
 
-    .player-position.east {
-        right: 0px;
+    .card-back {
+        font-size: 0.5rem;
     }
 
+    /* ═══ Hand Scaling — remove the 1.4x scale on mobile ═══ */
+    .player-position.north .hand {
+        scale: 1;
+        margin-top: -1rem;
+    }
+
+    .player-position.south .hand {
+        scale: 1;
+        margin-bottom: -0.5rem;
+    }
+
+    .player-position.west .hand {
+        scale: 1;
+        left: calc(-2rem - 10px);
+        top: calc(50% - 50px);
+    }
+
+    .player-position.east .hand {
+        scale: 1;
+        right: calc(-2rem - 10px);
+        top: calc(50% - 50px);
+    }
+
+    /* ═══ Player position adjustments ═══ */
     .player-position.north {
-        top: 0.5rem;
+        top: 0;
     }
 
     .player-position.south {
-        bottom: 0.5rem;
+        bottom: 0;
     }
 
+    .player-position.west {
+        left: 0;
+    }
+
+    .player-position.east {
+        right: 0;
+    }
+
+    /* ═══ Vertical hand card overlap — tighter on mobile ═══ */
+    .player-position.west .card,
+    .player-position.east .card {
+        margin-top: -2.5rem;
+    }
+
+    /* ═══ Player Info — compact on mobile ═══ */
+    .player-info {
+        padding: 4px 8px;
+    }
+
+    .player-position.north .player-info,
+    .player-position.south .player-info {
+        padding: 4px 10px;
+    }
+
+    .player-position.west .player-info,
+    .player-position.east .player-info {
+        padding: 4px 8px;
+    }
+
+    .player-name {
+        font-size: 0.75rem;
+    }
+
+    /* ═══ Badges — stack vertically on mobile ═══ */
+    .player-position.north .player-name,
+    .player-position.south .player-name {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .player-position.west .player-name,
+    .player-position.east .player-name {
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .dealer-badge,
+    .maker-badge {
+        font-size: 0.6rem;
+        padding: 2px 5px;
+        margin-left: 0;
+    }
+
+    /* ═══ Trump card — smaller ═══ */
+    .trump-card {
+        width: 40px;
+        height: 60px;
+        font-size: 0.8rem;
+    }
+
+    /* ═══ Trick cards — tighter spread ═══ */
     .trick-card.play-order-1 {
-        transform: translateX(-2.2rem) !important;
+        transform: translateX(-1.5rem) !important;
+    }
+
+    .trick-card.play-order-2 {
+        transform: translateX(-0.5rem) !important;
+    }
+
+    .trick-card.play-order-3 {
+        transform: translateX(0.5rem) !important;
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(2.2rem) !important;
+        transform: translateX(1.5rem) !important;
+    }
+
+    /* ═══ Trick tallies — smaller ═══ */
+    .trick-tally {
+        gap: 2px;
+    }
+
+    .trick-tally svg {
+        width: 10px;
+        height: 10px;
+    }
+
+    /* ═══ Score area ═══ */
+    .score-container {
+        gap: 0.75rem;
+    }
+
+    .flipboard-score {
+        width: 1.75rem;
+        height: 2rem;
+    }
+
+    .score-digit {
+        font-size: 1.1rem;
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+
+    .team-label {
+        font-size: 0.6rem;
+    }
+
+    /* ═══ Game message ═══ */
+    #message {
+        font-size: 0.75rem;
+        white-space: normal;
+    }
+
+    .game-message-container {
+        max-width: 70vw;
+        padding: 4px 10px;
+    }
+
+    /* ═══ South hand hover — disable rotation scale on mobile ═══ */
+    .player-position.south .hand .card:not(.card-back):hover {
+        transform: none !important;
+    }
+
+    /* ═══ Euchred overlay ═══ */
+    .euchred-overlay.team-you h1,
+    .euchred-overlay.team-opponent h1 {
+        font-size: 2.5rem;
+    }
+
+    .euchred-overlay p {
+        font-size: 1rem;
+    }
+
+    /* ═══ User turn dialog ═══ */
+    .user-turn-content {
+        min-width: 85vw;
+        max-width: 90vw;
+        padding: 8px;
+    }
+
+    .dialog-btn {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+    }
+
+    /* ═══ AI decision bubble ═══ */
+    .ai-decision-bubble {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+
+    /* ═══ Settings button ═══ */
+    .settings-btn {
+        font-size: 0.8rem;
+        padding: 4px;
     }
 }
 
