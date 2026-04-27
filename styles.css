@@ -1928,6 +1928,26 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.5rem;
     }
 
+    /* Ensure responsive-label short names still work and don't stack with full names */
+    .responsive-label {
+        font-size: 0.5rem !important;
+        visibility: hidden;
+        position: relative;
+        line-height: 0;
+    }
+
+    .responsive-label::before {
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        font-size: 0.5rem;
+        line-height: normal;
+        content: attr(data-short);
+        text-align: center;
+    }
+
     .tally-crown {
         width: 8px !important;
         height: 8px !important;
@@ -1958,15 +1978,9 @@ body.beginner-mode .card.is-trump:hover {
         height: 20px;
     }
 
-    /* ═══ Game message — above player info ═══ */
+    /* ═══ Game message — hide on mobile (too cramped in header) ═══ */
     .game-message-container {
-        max-width: 60vw;
-        padding: 3px 8px;
-    }
-
-    #message {
-        font-size: 0.65rem;
-        white-space: normal;
+        display: none !important;
     }
 
     /* ═══ Game Board ═══ */
@@ -1978,6 +1992,7 @@ body.beginner-mode .card.is-trump:hover {
     .card {
         width: 38px;
         height: 57px;
+        margin-left: -19px; /* Half of 38px to center properly */
         border-radius: 4px;
         font-size: 0.65rem;
         padding: 2px 3px;
@@ -1998,7 +2013,7 @@ body.beginner-mode .card.is-trump:hover {
 
     /* ═══ Center Deck — scale down and ensure centered ═══ */
     .center-deck {
-        transform: scale(0.85);
+        transform: scale(1.1); /* Slightly larger than 0.85 */
         margin: 0 auto;
     }
 
@@ -2067,21 +2082,21 @@ body.beginner-mode .card.is-trump:hover {
 
     /* ═══ Player Info — compact on mobile ═══ */
     .player-info {
-        padding: 3px 6px;
+        padding: 5px 8px;
     }
 
     .player-position.north .player-info,
     .player-position.south .player-info {
-        padding: 3px 8px;
+        padding: 5px 12px;
     }
 
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 3px 6px;
+        padding: 5px 8px;
     }
 
     .player-name {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
     }
 
     /* ═══ Badges — stack vertically on mobile ═══ */
