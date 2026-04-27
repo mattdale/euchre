@@ -2570,7 +2570,8 @@ function updateSouthHandFan() {
     const count = cards.length;
     if (count === 0) return;
 
-    const spread = 24; // degrees between each card
+    const isMobile = window.innerWidth <= 480;
+    const spread = isMobile ? 12 : 24; // degrees between each card
     // Use Math.min(count, 5) so the fan doesn't shift left and clip when holding 6 cards (trump candidate phase)
     const centerMathCount = Math.min(count, 5);
     

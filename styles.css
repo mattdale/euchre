@@ -38,6 +38,7 @@
     --color-yellow-alpha-60: rgba(241, 196, 15, 0.6);
     --color-yellow-alpha-80: rgba(241, 196, 15, 0.8);
     --color-white-alpha-10: rgba(255, 255, 255, 0.1);
+    --color-bg-dark-alpha-25: rgba(26, 20, 35, 0.25);
     --color-bg-dark-alpha-65: rgba(26, 20, 35, 0.65);
     --color-bg-dark-alpha-95: rgba(26, 20, 35, 0.95);
 }
@@ -54,7 +55,8 @@ html,
 body {
     width: 100vw;
     height: 100vh;
-    height: 100dvh; /* Dynamic viewport height — accounts for iOS browser chrome */
+    height: 100dvh;
+    /* Dynamic viewport height — accounts for iOS browser chrome */
     overflow: hidden;
     background-color: var(--color-bg-dark);
 }
@@ -455,10 +457,9 @@ h1 {
     color: var(--color-bg-dark);
     padding: 4px 8px;
     border-radius: 4px;
-    margin-left: 6px;
+    margin-left: 12px;
     font-weight: 600;
     display: none;
-    /* Hidden by default */
 }
 
 .dealer-badge.active {
@@ -665,7 +666,7 @@ h1 {
     cursor: pointer;
     position: absolute;
     /* REQUIRED for layout */
-    z-index: 1000;
+    z-index: 99999;
     pointer-events: auto;
     border-radius: 8px;
 }
@@ -834,7 +835,7 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: var(--color-primary) !important;
 
 }
@@ -1668,7 +1669,8 @@ body.beginner-mode .card.is-trump:hover {
     border-radius: 4px;
     border: 1px solid var(--color-yellow-alpha-30);
     white-space: nowrap;
-    z-index: 25000; /* Above player-info (20000) */
+    z-index: 25000;
+    /* Above player-info (20000) */
 }
 
 #message {
@@ -1683,28 +1685,11 @@ body.beginner-mode .card.is-trump:hover {
     word-wrap: break-word;
 }
 
-/* Responsive Design */
-
-/* Responsive Design */
-@media (max-width: 1250px) {
-
-    .game-message-container {
-        z-index: 25000;
-        background-color: var(--color-bg-dark-alpha-95);
-        box-shadow: 0 4px 10px var(--color-shadow-50);
-        border: 1px solid var(--color-white-alpha-10);
-        padding: 8px 16px;
-        border-radius: 8px;
-        transform: translateX(-50%);
-    }
-
-    #message {
-        white-space: normal;
-    }
-
-}
 
 @media (max-width: 900px) {
+    .game-message-container {
+        display: none;
+    }
 
     /* At tablet widths, reduce the trick card spread so it fits horizontally */
     .trick-card.play-order-1 {
@@ -1723,16 +1708,6 @@ body.beginner-mode .card.is-trump:hover {
         transform: translateX(4rem) !important;
     }
 
-    /* Make game message container more prominent on smaller screens */
-    .game-message-container {
-        z-index: 25000;
-        background-color: var(--color-bg-dark-alpha-95);
-        box-shadow: 0 4px 10px var(--color-shadow-50);
-        border: 1px solid var(--color-white-alpha-10);
-        padding: 6px 14px;
-        border-radius: 8px;
-    }
-
     /* Swap "Your Team" → "You" and "Opponents" → "Them" on small screens */
     .responsive-label {
         font-size: 0;
@@ -1741,7 +1716,7 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .responsive-label::before {
-        font-size: 0.7rem;
+        font-size: 0.8rem;
         /* restore legible size for the pseudo-content */
         line-height: normal;
         content: attr(data-short);
@@ -1750,27 +1725,25 @@ body.beginner-mode .card.is-trump:hover {
 }
 
 @media (max-width: 768px) {
+    .header-right {
+        gap: 1.0rem;
+    }
 
-    /* Keep score labels visible and sizes consistent */
     .team-label {
         display: inline-block;
     }
 
     .score-container {
         gap: 1.5rem;
-        /* desktop gap */
     }
 
     .flipboard-score {
         width: 2.25rem;
-        /* desktop width */
         height: 2.5rem;
-        /* desktop height */
     }
 
     .score-digit {
         font-size: 1.5rem;
-        /* desktop font-size */
     }
 
     .card {
@@ -1896,125 +1869,125 @@ body.beginner-mode .card.is-trump:hover {
 
 @media (max-width: 480px) {
 
-    /* ═══ iOS Viewport Fix ═══ */
-    html, body {
+    html,
+    body {
         height: 100vh;
         height: 100dvh;
     }
 
-    /* ═══ Header — much shorter on mobile ═══ */
-    .game-header {
-        height: 2.5rem;
+    h1 {
+        font-size: 1.2rem;
     }
 
     .header-content {
-        padding: 0 0.5rem;
+        padding: 0px .25rem 0px 1rem;
     }
 
-    h1 {
-        font-size: 1rem;
+    .header-right {
+        gap: 0.5rem !important;
     }
 
-    /* ═══ Score area — compact ═══ */
     .score-container {
-        gap: 0.4rem;
-    }
-
-    .team-score-section {
-        gap: 0.2rem;
-    }
-
-    .team-label {
-        font-size: 0.5rem;
-    }
-
-    /* Ensure responsive-label short names still work and don't stack with full names */
-    .responsive-label {
-        font-size: 0.5rem !important;
-        visibility: hidden;
-        position: relative;
-        line-height: 0;
-    }
-
-    .responsive-label::before {
-        visibility: visible;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        font-size: 0.5rem;
-        line-height: normal;
-        content: attr(data-short);
-        text-align: center;
-    }
-
-    .tally-crown {
-        width: 8px !important;
-        height: 8px !important;
+        gap: 1.4rem;
     }
 
     .team-tally-crowns {
-        gap: 1px !important;
+        display: none;
+    }
+
+    .team-score-section {
+        gap: 0.3rem;
     }
 
     .flipboard-score {
-        width: 1.4rem;
-        height: 1.6rem;
+        width: 2.0rem;
+        height: 2.4rem;
         border-radius: 2px;
     }
 
     .score-digit {
-        font-size: 0.9rem;
+        font-size: 1.2rem;
     }
 
-    /* ═══ Settings gear — smaller ═══ */
     .settings-btn {
         font-size: 0.7rem;
         padding: 2px;
     }
 
     .settings-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 28px;
+        height: 28px;
     }
 
-    /* ═══ Game message — hide on mobile (too cramped in header) ═══ */
-    .game-message-container {
+
+    header.game-header .game-message-container {
         display: none !important;
     }
 
-    /* ═══ Game Board ═══ */
-    .game-board {
-        overflow: hidden;
-    }
-
-    /* ═══ Cards — much smaller on mobile ═══ */
+    /* ═══ Cards — scaled up significantly for mobile (now 86px wide) ═══ */
     .card {
-        width: 38px;
-        height: 57px;
-        margin-left: -19px; /* Half of 38px to center properly */
-        border-radius: 4px;
-        font-size: 0.65rem;
-        padding: 2px 3px;
+        width: 86px;
+        height: 124px;
+        margin-left: -43px;
+        /* Half of width to center properly */
+        border-radius: 6px;
+        font-size: 1.1rem;
+        padding: 4px 6px;
     }
 
     .card-suit {
-        font-size: 0.7rem;
+        font-size: 1.1rem;
+        padding-top: 2px;
     }
 
     .card-value,
     .card-value-bottom {
-        font-size: 0.55rem;
+        font-size: 1rem;
     }
 
     .card-back {
-        font-size: 0.5rem;
+        font-size: 1rem;
     }
 
-    /* ═══ Center Deck — scale down and ensure centered ═══ */
+    .player-position.south .card {
+        bottom: 0;
+        top: auto;
+        transform-origin: bottom center;
+    }
+
+    .player-position.south .hand .card:nth-child(1) {
+        transform: rotate(-40deg) !important;
+        z-index: 10;
+    }
+
+    .player-position.south .hand .card:nth-child(2) {
+        transform: rotate(-20deg) !important;
+        z-index: 11;
+    }
+
+    .player-position.south .hand .card:nth-child(3) {
+        transform: rotate(0deg) ;
+        z-index: 12;
+    }
+
+    .player-position.south .hand .card:nth-child(4) {
+        transform: rotate(20deg) !important;
+        z-index: 13;
+    }
+
+    .player-position.south .hand .card:nth-child(5) {
+        transform: rotate(40deg) !important;
+        z-index: 14;
+    }
+
+    .player-position.south .card:hover {
+        box-shadow: 0 18px 36px var(--color-shadow-55);
+    }
+
+    /* ═══ Center Deck and Play Area ═══ */
     .center-deck {
-        transform: scale(1.1); /* Slightly larger than 0.85 */
-        margin: 0 auto;
+        transform: scale(1.2);
+        margin: 2rem 0 0 0;
     }
 
     .play-area {
@@ -2027,34 +2000,32 @@ body.beginner-mode .card.is-trump:hover {
         height: 180px;
     }
 
-    /* ═══ Start Game button ═══ */
     .start-game-btn {
-        font-size: 1.1rem;
-        width: 180px;
-        height: 44px;
+        font-size: 1.3rem;
+        width: 160px;
+        height: 56px;
     }
 
-    /* ═══ Hand Scaling — remove the 1.4x scale on mobile ═══ */
     .player-position.north .hand {
         scale: 1;
         margin-top: -1.2rem;
     }
 
     .player-position.south .hand {
-        scale: 1;
-        margin-bottom: -0.5rem;
+        scale: 1.5;
+        margin-bottom: -1rem;
     }
 
     .player-position.west .hand {
         scale: 1;
-        left: calc(-1.5rem - 10px);
-        top: calc(50% - 45px);
+        left: calc(-5rem - 10px);
+        top: calc(44% - 45px);
     }
 
     .player-position.east .hand {
         scale: 1;
-        right: calc(-1.5rem - 10px);
-        top: calc(50% - 45px);
+        right: calc(-5rem - 10px);
+        top: calc(44% - 45px);
     }
 
     /* ═══ Player position adjustments ═══ */
@@ -2074,6 +2045,16 @@ body.beginner-mode .card.is-trump:hover {
         right: 0;
     }
 
+    .card.trump-pickup {
+        border: 3px solid var(--color-yellow);
+        box-shadow: 0 0 15px var(--color-yellow-alpha-60);
+        position: absolute !important;
+        left: 100%;
+        margin-left: 2rem;
+        transform: translateX(3.5rem) translateY(-15rem) rotate(0deg);
+        z-index: 20000;
+    }
+
     /* ═══ Vertical hand card overlap — tighter on mobile ═══ */
     .player-position.west .card,
     .player-position.east .card {
@@ -2087,7 +2068,7 @@ body.beginner-mode .card.is-trump:hover {
 
     .player-position.north .player-info,
     .player-position.south .player-info {
-        padding: 5px 12px;
+        padding: 5px 8px 8px 8px;
     }
 
     .player-position.west .player-info,
@@ -2096,14 +2077,15 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .player-name {
-        font-size: 0.8rem;
+        font-size: 1rem;
     }
 
     /* ═══ Badges — stack vertically on mobile ═══ */
     .player-position.north .player-name,
     .player-position.south .player-name {
-        flex-direction: column;
-        gap: 2px;
+        flex-direction: row;
+        align-items: end;
+        gap: 8px;
     }
 
     .player-position.west .player-name,
@@ -2114,16 +2096,33 @@ body.beginner-mode .card.is-trump:hover {
 
     .dealer-badge,
     .maker-badge {
-        font-size: 0.55rem;
-        padding: 1px 4px;
+        font-size: 0.7rem;
+        padding: 3px 4px 2px 4px;
         margin-left: 0;
     }
 
+    .player-position.west .dealer-badge,
+    .maker-badge {
+        font-size: 0.65rem;
+        padding: 2px 4px 3px 4px;
+        margin-left: 0;
+        margin-bottom: 4px;
+    }
+
+    .player-position.east .dealer-badge,
+    .maker-badge {
+        font-size: 0.65rem;
+        padding: 2px 4px 3px 4px;
+        margin-left: 0;
+        margin-bottom: 4px;
+    }
+
+
     /* ═══ Trump corner icons — much smaller ═══ */
     .trump-icon {
-        width: 28px;
-        height: 28px;
-        font-size: 1.2rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.4rem;
     }
 
     /* ═══ Trump card — smaller ═══ */
@@ -2176,21 +2175,57 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     /* ═══ User turn dialog ═══ */
+    .user-turn-dialog {
+        bottom: 10rem;
+    }
+
     .user-turn-content {
-        min-width: 85vw;
+        min-width: 80vw;
         max-width: 90vw;
-        padding: 6px;
+        padding: 12px;
+    }
+
+    #user-turn-message {
+        font-size: 0.9rem;
+        margin: 0;
+        color: var(--color-bg-dark);
+        font-weight: 500;
+        line-height: 140%;
+    }
+
+    .dialog-text {
+        font-size: 0.8rem;
+        gap: 0px;
+        flex-flow: column;
+        padding-bottom: 4px;
+    }
+
+    .dialog-text span:first-child {
+        font-size: 1rem;
     }
 
     .dialog-btn {
-        padding: 4px 10px;
-        font-size: 0.7rem;
+        padding: 8px 10px;
+        font-size: .9rem;
+    }
+
+    .suit-card {
+        padding: 4px 0px 0px 0px;
+        width: 48px;
+    }
+
+    .suit-name {
+        display: none;
     }
 
     /* ═══ AI decision bubble ═══ */
     .ai-decision-bubble {
         font-size: 0.65rem;
         padding: 3px 6px;
+    }
+
+    .ai-decision-content {
+        line-height: 120%;
     }
 
     /* ═══ Settings modal — fit mobile screen ═══ */
@@ -2247,7 +2282,7 @@ body.beginner-mode .card.is-trump:hover {
     justify-content: center;
     border-radius: 6px;
     color: var(--color-bg-dark);
-    opacity: 0.5;
+    opacity: 1;
     transition: opacity 0.15s ease, background-color 0.15s ease;
     line-height: 1;
 }
@@ -2255,11 +2290,12 @@ body.beginner-mode .card.is-trump:hover {
 .modal-close-btn i {
     font-size: 1.15rem;
     display: block;
+    color: var(--color-bg-dark);
 }
 
 .modal-close-btn:hover {
     opacity: 1;
-    background-color: var(--color-bg-dark-alpha-65);
+    background-color: var(--color-bg-dark-alpha-25);
     color: var(--color-light);
 }
 
