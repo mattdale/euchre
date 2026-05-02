@@ -476,7 +476,6 @@ h1 {
     margin-left: 6px;
     display: none;
     animation: makerBadgePulse 2s infinite;
-    line-height: normal;
 }
 
 .maker-badge.active {
@@ -1316,7 +1315,7 @@ body.beginner-mode .card.is-trump:hover {
     left: 50%;
     transform: translateX(-50%);
     display: none;
-    z-index: 2500;
+    z-index: 21000;
     animation: slideUpDialog 0.3s ease-out;
 }
 
@@ -1331,7 +1330,6 @@ body.beginner-mode .card.is-trump:hover {
     box-shadow: 0 6px 20px var(--color-shadow-40);
     max-width: 1000px;
     /* Increased to accommodate longer single-line text */
-    min-width: 300px;
     white-space: nowrap;
     /* Prevent text wrapping */
     position: relative;
@@ -1691,21 +1689,25 @@ body.beginner-mode .card.is-trump:hover {
         display: none;
     }
 
-    /* At tablet widths, reduce the trick card spread so it fits horizontally */
+    /* At tablet widths, reduce the trick card spread so it fits horizontally and scale down 10% */
+    .trick-card {
+        scale: 1.26; /* Reduced 10% from desktop scale of 1.4 */
+    }
+
     .trick-card.play-order-1 {
         transform: translateX(-4rem) !important;
     }
 
     .trick-card.play-order-2 {
-        transform: translateX(-1.5rem) !important;
+        transform: translateX(-2rem) !important;
     }
 
     .trick-card.play-order-3 {
-        transform: translateX(1.5rem) !important;
+        transform: translateX(0rem) !important;
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(4rem) !important;
+        transform: translateX(2rem) !important;
     }
 
     /* Swap "Your Team" → "You" and "Opponents" → "Them" on small screens */
@@ -1722,149 +1724,70 @@ body.beginner-mode .card.is-trump:hover {
         content: attr(data-short);
     }
 
-}
-
-@media (max-width: 768px) {
-    .header-right {
-        gap: 1.0rem;
+    /* ═══ Badges — stack vertically on tablet and mobile for side players ═══ */
+    .player-position.west .player-name,
+    .player-position.east .player-name {
+        flex-direction: column;
+        gap: 2px;
     }
 
-    .team-label {
-        display: inline-block;
+    .player-position.west .dealer-badge,
+    .player-position.west .maker-badge,
+    .player-position.east .dealer-badge,
+    .player-position.east .maker-badge {
+        font-size: 0.65rem;
+        padding: 2px 4px 3px 4px;
+        margin-left: 0;
+        margin-bottom: 4px;
     }
 
-    .score-container {
-        gap: 1.5rem;
-    }
-
-    .flipboard-score {
-        width: 2.25rem;
-        height: 2.5rem;
-    }
-
-    .score-digit {
-        font-size: 1.5rem;
-    }
-
-    .card {
-        width: 80px;
-        height: 120px;
-        font-size: 1rem;
-    }
-
-    .card-suit {
-        font-size: 1.2rem;
-    }
-
-    .card-value {
-        font-size: 0.9rem;
-    }
-
-    .card-value-bottom {
-        font-size: 0.9rem;
-    }
-
-    .trump-card {
-        width: 55px;
-        height: 82.5px;
-        font-size: 1.2rem;
-    }
-
-    /* Trick Cards Spread */
-    .trick-card.play-order-1 {
-        transform: translateX(-2.5rem) !important;
-        z-index: 1;
-    }
-
-    .trick-card.play-order-2 {
-        transform: translateX(-0.8rem) !important;
-        z-index: 2;
-    }
-
-    .trick-card.play-order-3 {
-        transform: translateX(0.8rem) !important;
-        z-index: 3;
-    }
-
-    .trick-card.play-order-4 {
-        transform: translateX(2.5rem) !important;
-        z-index: 4;
-    }
-
-    /* Hand overlap adjustments */
-    .hand {
-        gap: -15px;
-    }
-
-    .player-position.south .hand .card:not(.card-back):nth-child(1):hover {
-        transform: rotate(-48deg) translateY(-5px) scale(1.0) !important;
-    }
-
-    .player-position.south .hand .card:not(.card-back):nth-child(2):hover {
-        transform: rotate(-24deg) translateY(-5px) scale(1.0) !important;
-    }
-
-    .player-position.south .hand .card:not(.card-back):nth-child(3):hover {
-        transform: rotate(0deg) translateY(-5px) scale(1.0) !important;
-    }
-
-    .player-position.south .hand .card:not(.card-back):nth-child(4):hover {
-        transform: rotate(24deg) translateY(-5px) scale(1.0) !important;
-    }
-
-    .player-position.south .hand .card:not(.card-back):nth-child(5):hover {
-        transform: rotate(48deg) translateY(-5px) scale(1.0) !important;
-    }
-
-    /* Vertical hand negative overlap increased */
-    .player-position.west .card,
-    .player-position.east .card {
-        margin-top: -3.5rem;
-    }
-
-    .player-name {
-        font-size: 1rem;
-    }
-
-
-
-    /* Fix user turn dialog overflow */
+    /* Fix user turn dialog layout for tablet/mobile */
     .user-turn-content {
-        padding: 10px;
-        min-width: 90vw;
+        flex-direction: column;
+        padding: 16px 12px;
         max-width: 95vw;
         white-space: normal;
-        flex-direction: column;
-        gap: 10px;
+        text-align: center;
+        gap: 12px;
+    }
+
+    #user-turn-message {
+        font-size: 0.95rem;
+        margin: 0;
+        color: var(--color-bg-dark);
+        font-weight: 500;
+        line-height: 140%;
+    }
+
+    .dialog-text {
+        font-size: 0.9rem;
+        gap: 6px;
+        flex-flow: column;
+    }
+
+    .dialog-text span:first-child {
+        font-size: 1.1rem;
     }
 
     .dialog-actions {
-        flex-wrap: wrap;
-        justify-content: center;
-        width: 100%;
-        gap: 5px;
-    }
-
-    .dialog-btn {
-        padding: 5px 12px;
-        font-size: 0.9rem;
-    }
-
-    .euchred-overlay.team-you h1,
-    .euchred-overlay.team-opponent h1 {
-        font-size: 4rem;
-        text-align: center;
-    }
-
-    .euchred-overlay p {
-        font-size: 1.3rem;
+        display: none;
     }
 
     .dialog-actions.show {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
-        margin-left: 0rem;
+        width: 100%;
+        gap: 8px;
+        margin-left: 0;
     }
+
+    .dialog-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
 }
 
 @media (max-width: 480px) {
@@ -2049,9 +1972,9 @@ body.beginner-mode .card.is-trump:hover {
         border: 3px solid var(--color-yellow);
         box-shadow: 0 0 15px var(--color-yellow-alpha-60);
         position: absolute !important;
-        left: 100%;
-        margin-left: 2rem;
-        transform: translateX(3.5rem) translateY(-15rem) rotate(0deg);
+        left: 50%;
+        margin-left: 0;
+        transform: translateX(3rem) translateY(-10rem) rotate(15deg);
         z-index: 20000;
     }
 
@@ -2088,33 +2011,11 @@ body.beginner-mode .card.is-trump:hover {
         gap: 8px;
     }
 
-    .player-position.west .player-name,
-    .player-position.east .player-name {
-        flex-direction: column;
-        gap: 2px;
-    }
-
     .dealer-badge,
     .maker-badge {
         font-size: 0.7rem;
         padding: 3px 4px 2px 4px;
         margin-left: 0;
-    }
-
-    .player-position.west .dealer-badge,
-    .maker-badge {
-        font-size: 0.65rem;
-        padding: 2px 4px 3px 4px;
-        margin-left: 0;
-        margin-bottom: 4px;
-    }
-
-    .player-position.east .dealer-badge,
-    .maker-badge {
-        font-size: 0.65rem;
-        padding: 2px 4px 3px 4px;
-        margin-left: 0;
-        margin-bottom: 4px;
     }
 
 
@@ -2132,7 +2033,11 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.7rem;
     }
 
-    /* ═══ Trick cards — tighter spread ═══ */
+    /* ═══ Trick cards — tighter spread and smaller ═══ */
+    .trick-card {
+        scale: 1.13;
+    }
+
     .trick-card.play-order-1 {
         transform: translateX(-1.2rem) !important;
     }
@@ -2179,36 +2084,6 @@ body.beginner-mode .card.is-trump:hover {
         bottom: 10rem;
     }
 
-    .user-turn-content {
-        min-width: 80vw;
-        max-width: 90vw;
-        padding: 12px;
-    }
-
-    #user-turn-message {
-        font-size: 0.9rem;
-        margin: 0;
-        color: var(--color-bg-dark);
-        font-weight: 500;
-        line-height: 140%;
-    }
-
-    .dialog-text {
-        font-size: 0.8rem;
-        gap: 0px;
-        flex-flow: column;
-        padding-bottom: 4px;
-    }
-
-    .dialog-text span:first-child {
-        font-size: 1rem;
-    }
-
-    .dialog-btn {
-        padding: 8px 10px;
-        font-size: .9rem;
-    }
-
     .suit-card {
         padding: 4px 0px 0px 0px;
         width: 48px;
@@ -2250,6 +2125,83 @@ body.beginner-mode .card.is-trump:hover {
 .settings-btn:hover {
     transform: rotate(90deg);
     background: transparent;
+}
+
+/* ═══ Go Alone Confirmation Modal ═══ */
+.go-alone-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--color-bg-dark-alpha-65);
+    z-index: 30000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.go-alone-modal-content {
+    background-color: var(--color-primary);
+    padding: 1.5rem;
+    border-radius: 12px;
+    width: 320px;
+    max-width: 90vw;
+    text-align: center;
+    color: var(--color-bg-dark);
+    box-shadow: 0 8px 32px var(--color-shadow-40);
+}
+
+.go-alone-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+.go-alone-desc {
+    font-size: 1rem;
+    line-height: 140%;
+    margin-bottom: 1.5rem;
+}
+
+.go-alone-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.go-alone-btn {
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Instrument Sans', sans-serif;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.play-teammate-btn {
+    background-color: var(--color-bg-dark);
+    color: var(--color-primary);
+    border: 2px solid var(--color-bg-dark);
+}
+
+.play-teammate-btn:hover {
+    opacity: 0.9;
+}
+
+.go-alone-confirm-btn {
+    background-color: transparent;
+    border: 2px solid var(--color-bg-dark);
+    color: var(--color-bg-dark);
+}
+
+.go-alone-confirm-btn:hover {
+    background-color: var(--color-bg-dark-alpha-25);
 }
 
 /* Settings Modal */

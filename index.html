@@ -245,15 +245,6 @@
                         <button class="dialog-btn pass-btn" id="suit-pass-btn">Pass</button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Rule Violation Popup -->
-            <div class="rule-popup" id="rule-popup">
-                <div class="rule-popup-content">
-                    <span id="rule-popup-message">You must follow suit!</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -306,6 +297,25 @@
 
             <button id="close-settings-btn" style="margin-top: 20px; width: 100%;">Save
                 & Close</button>
+        </div>
+    </div>
+
+    <!-- Go Alone Confirmation Modal -->
+    <div class="go-alone-modal-overlay" id="go-alone-modal">
+        <div class="go-alone-modal-content">
+            <h2 class="go-alone-title">Feeling brave?</h2>
+            <p class="go-alone-desc">Go alone for more points or keep playing with your teammate.</p>
+            <div class="go-alone-actions">
+                <button class="go-alone-btn play-teammate-btn" id="btn-play-teammate">Play with teammate</button>
+                <button class="go-alone-btn go-alone-confirm-btn" id="btn-go-alone-confirm">Go alone</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rule Violation Popup -->
+    <div class="rule-popup" id="rule-popup">
+        <div class="rule-popup-content">
+            <span id="rule-popup-message">You must follow suit!</span>
         </div>
     </div>
 

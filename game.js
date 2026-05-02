@@ -386,8 +386,8 @@ function startBidding() {
                 showUserTurnDialog('You must name trump:', 'suit_selection_forced');
             } else {
                 messageEl.textContent = `Your turn. Call trump suit?`;
-                // Show suit selection in dialog with instruction about going alone
-                showUserTurnDialog('Choose a trump suit (hold Shift to go alone):', 'suit_selection');
+                // Show suit selection in dialog without shift instruction
+                showUserTurnDialog('Choose trump suit:', 'suit_selection');
             }
         } else {
             if (isStickTheDealer) {
@@ -2410,7 +2410,7 @@ function showUserTurnDialog(message, dialogType = 'info') {
                 card.style.opacity = '1';
                 card.style.pointerEvents = 'auto';
                 if (dialogType === 'suit_selection_forced') {
-                    card.title = `Must choose ${suit} (Fuck the Dealer)`;
+                    card.title = `Forced to call ${suit} (Stick the Dealer)`;
                 } else {
                     card.title = `Call ${suit} trump`;
                 }
@@ -3292,23 +3292,65 @@ window.addEventListener('DOMContentLoaded', () => {
     // Populate the center deck so it's visible from the start
     populateCenterDeck();
 
-    // Suit card click handlers - handle going alone with Shift key
+    // Go alone modal variables
+    const goAloneModal = document.getElementById('go-alone-modal');
+    const btnPlayTeammate = document.getElementById('btn-play-teammate');
+    const btnGoAloneConfirm = document.getElementById('btn-go-alone-confirm');
+    let pendingTrumpSuit = null;
+
+    const hideGoAloneModal = () => {
+        if (!goAloneModal) return;
+        goAloneModal.style.opacity = '0';
+        goAloneModal.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            goAloneModal.style.display = 'none';
+        }, 150);
+    };
+
+    // Show modal function
+    const showGoAloneModal = () => {
+        if (!goAloneModal) return;
+        goAloneModal.style.display = 'flex';
+        goAloneModal.style.opacity = '0';
+        goAloneModal.style.transform = 'scale(0.95)';
+        // Trigger reflow
+        void goAloneModal.offsetWidth;
+        goAloneModal.style.opacity = '1';
+        goAloneModal.style.transform = 'scale(1)';
+    };
+
+    // Suit card click handlers
     document.querySelectorAll('.suit-card').forEach(card => {
         card.addEventListener('click', (event) => {
-            const suit = event.currentTarget.dataset.suit;
             if (event.currentTarget.style.pointerEvents !== 'none') {
-                // Check if shift key is held for going alone
-                const goingAlone = event.shiftKey;
+                pendingTrumpSuit = event.currentTarget.dataset.suit;
                 hideUserTurnDialog();
-                orderUp(suit, goingAlone);
-                if (goingAlone) {
-                    messageEl.textContent = `You call ${suit} trump and go alone!`;
-                } else {
-                    messageEl.textContent = `You call ${suit} trump!`;
-                }
+                showGoAloneModal();
             }
         });
     });
+
+    if (btnPlayTeammate) {
+        btnPlayTeammate.addEventListener('click', () => {
+            hideGoAloneModal();
+            if (pendingTrumpSuit) {
+                orderUp(pendingTrumpSuit, false);
+                messageEl.textContent = `You call ${pendingTrumpSuit} trump!`;
+                pendingTrumpSuit = null;
+            }
+        });
+    }
+
+    if (btnGoAloneConfirm) {
+        btnGoAloneConfirm.addEventListener('click', () => {
+            hideGoAloneModal();
+            if (pendingTrumpSuit) {
+                orderUp(pendingTrumpSuit, true);
+                messageEl.textContent = `You call ${pendingTrumpSuit} trump and go alone!`;
+                pendingTrumpSuit = null;
+            }
+        });
+    }
 
     // Settings logic
     const settingsBtn = document.getElementById('settings-btn');
