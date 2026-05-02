@@ -1213,6 +1213,7 @@ function startTrick() {
     setTimeout(() => {
         updateTurnIndicators(); // sync indicator right before prompting
         if (gameState.currentPlayer === 0) {
+            gameState.isProcessingTurn = false; // Release lock before giving control to player
             enableCardSelection();
             messageEl.textContent = 'Your turn. Select a card to play.';
             // Show prominent user turn dialog
@@ -1683,7 +1684,7 @@ function playCard(card, playerIndex) {
         setTimeout(determineTrickWinner, 1400);
     } else {
         const isLastTrickAutoPlay = (gameState.tricksPlayed === 4 && gameState.cardsPlayed > 0);
-        const nextDelay = isLastTrickAutoPlay ? 300 : 750;
+        const nextDelay = isLastTrickAutoPlay ? 300 : 850; // 850ms > 500ms renderPlayerHand in animateCardToCenter
 
         setTimeout(() => {
             updateTurnIndicators(); // sync indicator right before prompting
@@ -1695,15 +1696,17 @@ function playCard(card, playerIndex) {
                         playCard(lastCard, 0);
                     }
                 } else {
+                    gameState.isProcessingTurn = false; // Release lock before giving control to player
                     enableCardSelection();
                     messageEl.textContent = 'Your turn. Select a card to play.';
                     // Show prominent user turn dialog
                     showUserTurnDialog('Select a card to play');
                 }
             } else {
+                gameState.isProcessingTurn = false; // Release lock before AI picks
                 computerPlayCard();
             }
-        }, nextDelay); // Slowed from 800 to 960
+        }, nextDelay);
     }
 }
 
@@ -2571,7 +2574,7 @@ function updateSouthHandFan() {
     if (count === 0) return;
 
     const isMobile = window.innerWidth <= 480;
-    const spread = isMobile ? 12 : 24; // degrees between each card
+    const spread = isMobile ? 16 : 24; // degrees between each card
     // Use Math.min(count, 5) so the fan doesn't shift left and clip when holding 6 cards (trump candidate phase)
     const centerMathCount = Math.min(count, 5);
     
@@ -3186,6 +3189,13 @@ function disableCardSelection() {
 function handleCardClick(event) {
     if (gameState.currentPlayer !== 0 || gameState.gamePhase !== 'playing') return;
 
+    // GUARD: prevent double-click race condition where a second click fires before
+    // the first card's animation completes and disableCardSelection() takes effect
+    if (gameState.isProcessingTurn) {
+        console.log('Player clicked while turn already processing — ignoring');
+        return;
+    }
+
     // Check if player is sitting out
     if (gameState.makerIsAlone && gameState.partnerSittingOut === 0) {
         showRulePopup('You are sitting out this hand - your partner is going alone!');
@@ -3194,20 +3204,33 @@ function handleCardClick(event) {
 
     const cardEl = event.currentTarget;
     const cardIndex = parseInt(cardEl.dataset.index);
+
+    // Re-read card from live gameState (not a cached reference) to ensure we have current state
     const card = gameState.playerHand[cardIndex];
 
     if (!card) {
-        console.error('No card found at index:', cardIndex);
+        console.error('No card found at index:', cardIndex, '— hand has', gameState.playerHand.length, 'cards');
         return;
     }
 
-    // Validate the card according to Euchre rules
-    if (!canPlayCard(card, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit)) {
-        // Show rule violation popup
-        const leadSuitName = gameState.leadSuit.charAt(0).toUpperCase() + gameState.leadSuit.slice(1);
-        showRulePopup(`You must follow suit! Play a ${leadSuitName} if you have one.`);
+    // Double-check that this card object actually exists in the current hand (guards against stale data-index)
+    const cardExistsInHand = gameState.playerHand.some(c => c.suit === card.suit && c.value === card.value);
+    if (!cardExistsInHand) {
+        console.error('Card not found in live hand — possible stale data-index:', card);
         return;
     }
+
+    // Validate the card according to Euchre rules (follow-suit enforcement)
+    if (!canPlayCard(card, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit)) {
+        if (gameState.leadSuit) {
+            const leadSuitName = gameState.leadSuit.charAt(0).toUpperCase() + gameState.leadSuit.slice(1);
+            showRulePopup(`You must follow suit! Play a ${leadSuitName} if you have one.`);
+        }
+        return;
+    }
+
+    // Lock the turn immediately so no second click can sneak through
+    gameState.isProcessingTurn = true;
 
     // Hide user turn dialog
     hideUserTurnDialog();

@@ -1878,31 +1878,6 @@ body.beginner-mode .card.is-trump:hover {
         transform-origin: bottom center;
     }
 
-    .player-position.south .hand .card:nth-child(1) {
-        transform: rotate(-40deg) !important;
-        z-index: 10;
-    }
-
-    .player-position.south .hand .card:nth-child(2) {
-        transform: rotate(-20deg) !important;
-        z-index: 11;
-    }
-
-    .player-position.south .hand .card:nth-child(3) {
-        transform: rotate(0deg) ;
-        z-index: 12;
-    }
-
-    .player-position.south .hand .card:nth-child(4) {
-        transform: rotate(20deg) !important;
-        z-index: 13;
-    }
-
-    .player-position.south .hand .card:nth-child(5) {
-        transform: rotate(40deg) !important;
-        z-index: 14;
-    }
-
     .player-position.south .card:hover {
         box-shadow: 0 18px 36px var(--color-shadow-55);
     }
@@ -1935,7 +1910,7 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .player-position.south .hand {
-        scale: 1.5;
+        scale: 1.25;
         margin-bottom: -1rem;
     }
 
@@ -1976,6 +1951,8 @@ body.beginner-mode .card.is-trump:hover {
         margin-left: 0;
         transform: translateX(3rem) translateY(-10rem) rotate(15deg);
         z-index: 20000;
+        bottom: 1rem;
+        right: 3rem;
     }
 
     /* ═══ Vertical hand card overlap — tighter on mobile ═══ */
@@ -2039,19 +2016,19 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .trick-card.play-order-1 {
-        transform: translateX(-1.2rem) !important;
+        transform: translateX(-2.2rem) !important;
     }
 
     .trick-card.play-order-2 {
-        transform: translateX(-0.4rem) !important;
+        transform: translateX(-0.7rem) !important;
     }
 
     .trick-card.play-order-3 {
-        transform: translateX(0.4rem) !important;
+        transform: translateX(0.7rem) !important;
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(1.2rem) !important;
+        transform: translateX(2.2rem) !important;
     }
 
     /* ═══ Trick tallies — smaller ═══ */
