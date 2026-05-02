@@ -2537,6 +2537,9 @@ function renderPlayerCard(card, index, animate = false) {
         cardEl.classList.add('dealing');
     }
     playerHandEl.appendChild(cardEl);
+    // Re-center fan each time a card lands so each new card appears as
+    // the rightmost card, producing a clear left-to-right deal visual.
+    updateSouthHandFan();
 }
 
 // Render a single computer card (face down) with optional animation
@@ -2574,7 +2577,7 @@ function updateSouthHandFan() {
     if (count === 0) return;
 
     const isMobile = window.innerWidth <= 480;
-    const spread = isMobile ? 16 : 24; // degrees between each card
+    const spread = isMobile ? 20 : 24; // degrees between each card (wider on mobile for readability)
     // Use Math.min(count, 5) so the fan doesn't shift left and clip when holding 6 cards (trump candidate phase)
     const centerMathCount = Math.min(count, 5);
     
@@ -2582,22 +2585,38 @@ function updateSouthHandFan() {
         let rotation = 0;
         let baseTransform = '';
 
+        // Set z-index inline so it's always in sync with fan position regardless
+        // of CSS nth-child timing — leftmost card behind, rightmost card on top.
+        card.style.zIndex = 10 + (i === 5 ? 15 : i); // trump candidate always on very top
+        card.style.transformOrigin = 'bottom center';
+
         if (i === 5) {
-            // Trump candidate (6th card): move to the right, don't rotate, let it clip partially off screen
-            rotation = 0;
-            baseTransform = `translateX(8.5rem) translateY(1rem) rotate(0deg)`;
+            // Trump candidate (6th card): peek from bottom-right.
+            // Use transform-origin:center center so translate values are predictable —
+            // bottom-center origin + translateY pushed the card below the overflow boundary.
+            card.style.transformOrigin = 'center center';
+
+            if (isMobile) {
+                // On mobile: nudge right and UP slightly so it stays inside viewport.
+                // translateX shifts right; negative translateY lifts it above the clipping edge.
+                baseTransform = 'translateX(2.8rem) translateY(-0.5rem) rotate(15deg)';
+            } else {
+                baseTransform = 'translateX(8.5rem) translateY(-0.5rem) rotate(15deg)';
+            }
+            card.style.transform = baseTransform;
+            card.style.setProperty('--fan-rotation', '15deg');
+            // No hover handlers for the trump candidate
+            card._hoverEnter = null;
+            card._hoverLeave = null;
+            return; // skip common transform/hover code below
         } else {
             rotation = ((i - (centerMathCount - 1) / 2) * spread);
             baseTransform = `rotate(${rotation}deg)`;
         }
-        
+
         card.style.transform = baseTransform;
-        // Store for reference (not used for hover anymore)
         card.style.setProperty('--fan-rotation', `${rotation}deg`);
 
-        // Attach hover: slide outwards in the direction the card is facing by appending translateY *after* rotate.
-        // CSS transform order: rightmost applied first in matrix chain → local-space translate.
-        // We re-attach fresh listeners each time the fan updates to stay in sync.
         const oldEnter = card._hoverEnter;
         const oldLeave = card._hoverLeave;
         if (oldEnter) card.removeEventListener('mouseenter', oldEnter);

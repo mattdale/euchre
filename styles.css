@@ -1710,6 +1710,19 @@ body.beginner-mode .card.is-trump:hover {
         transform: translateX(2rem) !important;
     }
 
+    /* Center deck: keep margin:auto so scaling is symmetric around the deck center.
+       trick-cards must be full-width so margin:auto on center-deck reliably centers it. */
+    .trick-cards {
+        width: 100%;
+        /* stretch to fill play-area so center-deck margin:auto has a full-width reference */
+    }
+
+    .center-deck {
+        transform-origin: center center;
+        transform: scale(1.2);
+        margin: 0 auto;
+    }
+
     /* Swap "Your Team" → "You" and "Opponents" → "Them" on small screens */
     .responsive-label {
         font-size: 0;
@@ -1727,8 +1740,9 @@ body.beginner-mode .card.is-trump:hover {
     /* ═══ Badges — stack vertically on tablet and mobile for side players ═══ */
     .player-position.west .player-name,
     .player-position.east .player-name {
-        flex-direction: column;
-        gap: 2px;
+        flex-direction: column !important;
+        align-items: center;
+        gap: 4px;
     }
 
     .player-position.west .dealer-badge,
@@ -1737,16 +1751,30 @@ body.beginner-mode .card.is-trump:hover {
     .player-position.east .maker-badge {
         font-size: 0.65rem;
         padding: 2px 4px 3px 4px;
-        margin-left: 0;
-        margin-bottom: 4px;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-bottom: 0;
+        display: none;
     }
 
-    /* Fix user turn dialog layout for tablet/mobile */
+    .player-position.west .dealer-badge.active,
+    .player-position.west .maker-badge.active,
+    .player-position.east .dealer-badge.active,
+    .player-position.east .maker-badge.active {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Fix user turn dialog layout for tablet/mobile — stack text and actions vertically */
     .user-turn-content {
         flex-direction: column;
         padding: 16px 12px;
         max-width: 95vw;
-        white-space: normal;
+        white-space: normal;   /* override base nowrap so text wraps */
+        word-break: break-word;
         text-align: center;
         gap: 12px;
     }
@@ -1757,12 +1785,14 @@ body.beginner-mode .card.is-trump:hover {
         color: var(--color-bg-dark);
         font-weight: 500;
         line-height: 140%;
+        white-space: normal;
     }
 
     .dialog-text {
         font-size: 0.9rem;
         gap: 6px;
         flex-flow: column;
+        white-space: normal;
     }
 
     .dialog-text span:first-child {
@@ -1771,6 +1801,7 @@ body.beginner-mode .card.is-trump:hover {
 
     .dialog-actions {
         display: none;
+        margin-left: 0 !important;
     }
 
     .dialog-actions.show {
@@ -1780,7 +1811,7 @@ body.beginner-mode .card.is-trump:hover {
         align-items: center;
         width: 100%;
         gap: 8px;
-        margin-left: 0;
+        margin-left: 0 !important;
     }
 
     .dialog-btn {
@@ -1847,29 +1878,29 @@ body.beginner-mode .card.is-trump:hover {
         display: none !important;
     }
 
-    /* ═══ Cards — scaled up significantly for mobile (now 86px wide) ═══ */
+    /* ═══ Cards — sized for mobile readability ═══ */
     .card {
-        width: 86px;
-        height: 124px;
-        margin-left: -43px;
+        width: 76px;
+        height: 110px;
+        margin-left: -38px;
         /* Half of width to center properly */
         border-radius: 6px;
-        font-size: 1.1rem;
-        padding: 4px 6px;
+        font-size: 1rem;
+        padding: 4px 5px;
     }
 
     .card-suit {
-        font-size: 1.1rem;
+        font-size: 1rem;
         padding-top: 2px;
     }
 
     .card-value,
     .card-value-bottom {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 
     .card-back {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 
     .player-position.south .card {
@@ -1884,8 +1915,8 @@ body.beginner-mode .card.is-trump:hover {
 
     /* ═══ Center Deck and Play Area ═══ */
     .center-deck {
-        transform: scale(1.2);
-        margin: 2rem 0 0 0;
+        transform: scale(0.95);
+        margin: 1.5rem 0 0 0;
     }
 
     .play-area {
@@ -1910,8 +1941,10 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .player-position.south .hand {
-        scale: 1.25;
-        margin-bottom: -1rem;
+        /* No scale — scaling the container breaks transform-origin:bottom center on child cards
+           and creates an uneven fan. Card size is set directly above. */
+        scale: 1;
+        margin-bottom: -0.25rem;
     }
 
     .player-position.west .hand {
@@ -2010,25 +2043,25 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.7rem;
     }
 
-    /* ═══ Trick cards — tighter spread and smaller ═══ */
+    /* ═══ Trick cards — reduced size for mobile ═══ */
     .trick-card {
-        scale: 1.13;
+        scale: 0.684; /* 0.72 × 0.95 */
     }
 
     .trick-card.play-order-1 {
-        transform: translateX(-2.2rem) !important;
+        transform: translateX(-2.42rem) !important; /* -2.2 × 1.1 */
     }
 
     .trick-card.play-order-2 {
-        transform: translateX(-0.7rem) !important;
+        transform: translateX(-0.77rem) !important; /* -0.7 × 1.1 */
     }
 
     .trick-card.play-order-3 {
-        transform: translateX(0.7rem) !important;
+        transform: translateX(0.77rem) !important; /* 0.7 × 1.1 */
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(2.2rem) !important;
+        transform: translateX(2.42rem) !important; /* 2.2 × 1.1 */
     }
 
     /* ═══ Trick tallies — smaller ═══ */
