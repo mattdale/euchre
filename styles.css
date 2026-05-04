@@ -1924,9 +1924,25 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .player-position.south .card {
+        /* 102×146px ≈ +5% over previous 97×139. margin-left = -½ width for fan centering. */
+        width: 102px;
+        height: 146px;
+        margin-left: -51px;
+        font-size: 1.15rem;
+        padding: 4px 6px;
         bottom: 0;
         top: auto;
         transform-origin: bottom center;
+    }
+
+    /* Scale up suit icon and value text inside south hand cards to match bigger size */
+    .player-position.south .hand .card-suit {
+        font-size: 1.1rem;
+    }
+
+    .player-position.south .hand .card-value,
+    .player-position.south .hand .card-value-bottom {
+        font-size: 1rem;
     }
 
     .player-position.south .card:hover {
@@ -1945,7 +1961,9 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .trick-cards {
-        width: 180px;
+        /* Full-width so the trick-card translateX stagger is relative to screen center,
+           giving equal left/right margins when all 4 cards are played. */
+        width: 100%;
         height: 180px;
     }
 
@@ -2016,7 +2034,7 @@ body.beginner-mode .card.is-trump:hover {
 
     /* ═══ Player Info — compact on mobile ═══ */
     .player-info {
-        padding: 5px 8px;
+        padding: 5px 8px 8px 8px;
     }
 
     .player-position.north .player-info,
@@ -2030,7 +2048,7 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .player-name {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
 
     /* ═══ Badges — stack vertically on mobile ═══ */
@@ -2063,25 +2081,28 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.7rem;
     }
 
-    /* ═══ Trick cards — reduced size for mobile ═══ */
+    /* ═══ Trick cards — larger and evenly spread across full screen width ═══
+       Math (360px screen, scale=0.88 → visual card w=67px):
+       d=3rem (48px). Overlap = 67−48 = 19px ≈ 28% of card width.
+       Group span = 3d = 144px. Equal margins ≈ (360−144−67)/2 ≈ 75px each side. */
     .trick-card {
-        scale: 0.684; /* 0.72 × 0.95 */
+        scale: 0.88;
     }
 
     .trick-card.play-order-1 {
-        transform: translateX(-2.42rem) !important; /* -2.2 × 1.1 */
+        transform: translateX(-4.5rem) !important;
     }
 
     .trick-card.play-order-2 {
-        transform: translateX(-0.77rem) !important; /* -0.7 × 1.1 */
+        transform: translateX(-1.5rem) !important;
     }
 
     .trick-card.play-order-3 {
-        transform: translateX(0.77rem) !important; /* 0.7 × 1.1 */
+        transform: translateX(1.5rem) !important;
     }
 
     .trick-card.play-order-4 {
-        transform: translateX(2.42rem) !important; /* 2.2 × 1.1 */
+        transform: translateX(4.5rem) !important;
     }
 
     /* ═══ Trick tallies — smaller ═══ */
@@ -2108,12 +2129,15 @@ body.beginner-mode .card.is-trump:hover {
 
     .euchred-overlay.team-you h1,
     .euchred-overlay.team-opponent h1 {
-        font-size: 2.2rem;
+        color: var(--color-yellow);
+        font-size: 4rem !important;
         margin: 0 0 4px;
+        text-shadow: none;
     }
 
     .euchred-overlay p {
-        font-size: 0.95rem;
+        font-size: 1.5rem !important;
+        color: var(--color-primary);
         margin-top: 4px;
     }
 
@@ -2131,6 +2155,7 @@ body.beginner-mode .card.is-trump:hover {
     /* ═══ User turn dialog ═══ */
     .user-turn-dialog {
         bottom: 10rem;
+        width: 80vw;
     }
 
     .suit-card {

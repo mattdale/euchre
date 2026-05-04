@@ -43,10 +43,10 @@ let gameState = {
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
 const VALUES = ['9', '10', 'J', 'Q', 'K', 'A'];
 const SUIT_SYMBOLS = {
-    'hearts': '♥',
-    'diamonds': '♦',
-    'clubs': '♣',
-    'spades': '♠'
+    'hearts': '♥\uFE0E',
+    'diamonds': '♦\uFE0E',
+    'clubs': '♣\uFE0E',
+    'spades': '♠\uFE0E'
 };
 
 // DOM Elements
@@ -2204,6 +2204,11 @@ function showRulePopup(message) {
     rulePopupMessage.textContent = message;
     $(rulePopup).fadeIn(200);
 
+    // Reset all south hand cards to their base fan position.
+    // On mobile, mouseenter fires on tap but mouseleave never fires on touchend,
+    // so the tapped card gets stuck in the elevated hover position.
+    updateSouthHandFan();
+
     // Hide popup after 2 seconds
     setTimeout(() => {
         $(rulePopup).fadeOut(300);
@@ -2973,8 +2978,10 @@ function animateCardToCenter(cardEl, card, playerIndex) {
     animatingCard.style.left = currentX + 'px';
     animatingCard.style.top = currentY + 'px';
     animatingCard.style.zIndex = '1000';
-    // Constrain to the true visual 1.4 scale explicitly!
-    animatingCard.style.transform = `scale(1.4)`;
+    // On mobile cards are rendered smaller; use scale(1.0) so the clone doesn't
+    // appear to grow during flight and then shrink when it lands in the trick area.
+    const isMobile = window.innerWidth <= 480;
+    animatingCard.style.transform = isMobile ? `scale(1.0)` : `scale(1.4)`;
     animatingCard.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     animatingCard.classList.add('animating');
 
