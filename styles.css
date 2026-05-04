@@ -1819,6 +1819,26 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.9rem;
     }
 
+    /* ═══ Euchred overlay — tablet ═══ */
+    .euchred-overlay.team-you h1,
+    .euchred-overlay.team-opponent h1 {
+        font-size: 3.5rem;
+    }
+
+    .euchred-overlay p {
+        font-size: 1.4rem;
+    }
+
+    .euchred-gif {
+        max-width: min(260px, 70vw);
+        margin: 12px 0;
+    }
+
+    #euchred-continue-btn {
+        margin-top: 16px;
+        padding: 10px 24px;
+    }
+
 }
 
 @media (max-width: 480px) {
@@ -2079,13 +2099,32 @@ body.beginner-mode .card.is-trump:hover {
         transform: none !important;
     }
 
-    /* ═══ Euchred overlay ═══ */
+    /* ═══ Euchred overlay — mobile ═══ */
+    .euchred-overlay {
+        padding: 16px;
+        gap: 0;
+        justify-content: center;
+    }
+
     .euchred-overlay.team-you h1,
     .euchred-overlay.team-opponent h1 {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
+        margin: 0 0 4px;
     }
 
     .euchred-overlay p {
+        font-size: 0.95rem;
+        margin-top: 4px;
+    }
+
+    .euchred-gif {
+        max-width: min(220px, 72vw);
+        margin: 10px 0;
+    }
+
+    #euchred-continue-btn {
+        margin-top: 12px;
+        padding: 10px 20px;
         font-size: 1rem;
     }
 
