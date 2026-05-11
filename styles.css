@@ -912,6 +912,7 @@ h1 {
     border: 1px solid var(--color-card-border);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         box-shadow 0.3s ease;
+    will-change: transform;
     /* Reset any old per-player overrides */
     margin-top: 0;
     z-index: var(--card-index, 10);
@@ -1170,7 +1171,8 @@ body.beginner-mode .card.is-trump:hover {
 .card.animating {
     z-index: 1000 !important;
     box-shadow: 0 8px 25px var(--color-shadow-40) !important;
-    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.6s ease-out !important;
+    will-change: transform, box-shadow;
 }
 
 /* Center deck pile — non-interactive; Start Game button is the entry point */
@@ -1183,6 +1185,7 @@ body.beginner-mode .card.is-trump:hover {
     pointer-events: none;
     transform: scale(1.4);
     transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.7s ease-in;
+    will-change: transform, opacity;
 }
 
 .center-deck.animate-offscreen {

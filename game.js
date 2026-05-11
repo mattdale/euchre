@@ -833,15 +833,17 @@ function animateComputerTrumpPickupAndDiscard(dealerIndex, topCard, onComplete) 
     // Target: center of dealer hand
     const endX = handRect.left + handRect.width / 2 - deckCardRect.width / 2;
     const endY = handRect.top + handRect.height / 2 - deckCardRect.height / 2;
+    const deltaXP = endX - deckCardRect.left;
+    const deltaYP = endY - deckCardRect.top;
 
     // Remove the top deck card so it appears to leave
     if (allDeckCards.length > 0) allDeckCards[allDeckCards.length - 1].remove();
 
     pickupEl.offsetHeight; // reflow
-    pickupEl.style.transition = 'all 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    pickupEl.style.transition = 'transform 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    pickupEl.style.willChange = 'transform';
     setTimeout(() => {
-        pickupEl.style.left = endX + 'px';
-        pickupEl.style.top = endY + 'px';
+        pickupEl.style.transform = `translate(${deltaXP}px, ${deltaYP}px)`;
     }, 50);
 
     // --- STEP 2: After pickup lands, AI thinks briefly, then discard animation ---
@@ -865,11 +867,14 @@ function animateComputerTrumpPickupAndDiscard(dealerIndex, topCard, onComplete) 
             const freshHandRect = dealerHandEl.getBoundingClientRect();
             const freshDeckRect = centerDeck.getBoundingClientRect();
 
+            const startXD = freshHandRect.left + freshHandRect.width / 2 - deckCardRect.width / 2;
+            const startYD = freshHandRect.top + freshHandRect.height / 2 - deckCardRect.height / 2;
+
             // Discard clone: card-back starting at hand, flying to center deck
             const discardEl = createCardBackElement();
             discardEl.style.position = 'fixed';
-            discardEl.style.left = (freshHandRect.left + freshHandRect.width / 2 - deckCardRect.width / 2) + 'px';
-            discardEl.style.top = (freshHandRect.top + freshHandRect.height / 2 - deckCardRect.height / 2) + 'px';
+            discardEl.style.left = startXD + 'px';
+            discardEl.style.top = startYD + 'px';
             discardEl.style.width = deckCardRect.width + 'px';
             discardEl.style.height = deckCardRect.height + 'px';
             discardEl.style.zIndex = '2000';
@@ -880,16 +885,18 @@ function animateComputerTrumpPickupAndDiscard(dealerIndex, topCard, onComplete) 
             // Target: center deck location
             const discardTargetX = freshDeckRect.left + freshDeckRect.width / 2 - deckCardRect.width / 2;
             const discardTargetY = freshDeckRect.top + freshDeckRect.height / 2 - deckCardRect.height / 2;
+            const deltaXD = discardTargetX - startXD;
+            const deltaYD = discardTargetY - startYD;
 
             // Actually remove from state now
             const cardIndex = dealerHand.indexOf(cardToDiscard);
             dealerHand.splice(cardIndex, 1);
 
             discardEl.offsetHeight; // reflow
-            discardEl.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            discardEl.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s';
+            discardEl.style.willChange = 'transform, opacity';
             setTimeout(() => {
-                discardEl.style.left = discardTargetX + 'px';
-                discardEl.style.top = discardTargetY + 'px';
+                discardEl.style.transform = `translate(${deltaXD}px, ${deltaYD}px)`;
                 discardEl.style.opacity = '0.7';
             }, 50);
 
@@ -2989,11 +2996,14 @@ function animateCardToCenter(cardEl, card, playerIndex) {
     animatingCard.style.left = currentX + 'px';
     animatingCard.style.top = currentY + 'px';
     animatingCard.style.zIndex = '1000';
-    // On mobile cards are rendered smaller; use scale(1.0) so the clone doesn't
-    // appear to grow during flight and then shrink when it lands in the trick area.
+    // Set initial transform (no translation, just scale)
     const isMobile = window.innerWidth <= 480;
-    animatingCard.style.transform = isMobile ? `scale(1.0)` : `scale(1.4)`;
-    animatingCard.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    const baseScale = isMobile ? `scale(1.0)` : `scale(1.4)`;
+    animatingCard.style.transform = `translate(0px, 0px) ${baseScale}`;
+    
+    // Use ONLY transform and box-shadow for transitions!
+    animatingCard.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.5s ease';
+    animatingCard.style.willChange = 'transform, box-shadow';
     animatingCard.classList.add('animating');
 
     // Mount to absolute plane
@@ -3002,11 +3012,13 @@ function animateCardToCenter(cardEl, card, playerIndex) {
     // Turn source invisible
     cardEl.style.opacity = '0';
 
-    // On exact next frame, execute math sweep to identical layout footprint
+    const deltaX = targetX - currentX;
+    const deltaY = targetY - currentY;
+
+    // On exact next frame, execute math sweep to identical layout footprint using GPU transform
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            animatingCard.style.left = targetX + 'px';
-            animatingCard.style.top = targetY + 'px';
+            animatingCard.style.transform = `translate(${deltaX}px, ${deltaY}px) ${baseScale}`;
         });
     });
 
@@ -3155,13 +3167,16 @@ function animateCardFromCenter(card, playerIndex, dealIndex) {
         const endX = targetRect.left + targetRect.width / 2 - deckCardRect.width / 2;
         const endY = targetRect.top + targetRect.height / 2 - deckCardRect.height / 2;
 
-        // Force reflow then add transition
+        // Force reflow then add hardware-accelerated transition
         animatingCard.offsetHeight;
-        animatingCard.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        animatingCard.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        animatingCard.style.willChange = 'transform';
+
+        const deltaX = endX - deckCardRect.left;
+        const deltaY = endY - deckCardRect.top;
 
         setTimeout(() => {
-            animatingCard.style.left = endX + 'px';
-            animatingCard.style.top = endY + 'px';
+            animatingCard.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
             // No rotation during animation — CSS fan handles final rotation
         }, 100);
 
