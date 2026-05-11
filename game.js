@@ -1,4 +1,4 @@
-const CROWN = '👑';
+const CROWN_SVG = `<svg class="player-tally-crown" viewBox="0 0 256 256"><path d="M232,192H24a12,12,0,0,0,0,24H232a12,12,0,0,0,0-24ZM232,104a12,12,0,0,0-16.8-2.62L182.25,120,137.6,58.83a12,12,0,0,0-19.2,0L73.75,120,40.8,101.38A12,12,0,0,0,28.8,122.62l47.08,44.59A12,12,0,0,0,84,172h88a12,12,0,0,0,8.12-4.79l47.08-44.59A12,12,0,0,0,232,104Z"></path></svg>`;
 
 // Game state
 let gameState = {
@@ -43,10 +43,10 @@ let gameState = {
 const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
 const VALUES = ['9', '10', 'J', 'Q', 'K', 'A'];
 const SUIT_SYMBOLS = {
-    'hearts': '♥\uFE0E',
-    'diamonds': '♦\uFE0E',
-    'clubs': '♣\uFE0E',
-    'spades': '♠\uFE0E'
+    'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
+    'diamonds': '<img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" />',
+    'clubs': '<img src="img/suitClub.svg" class="suit-icon" alt="Clubs" />',
+    'spades': '<img src="img/suitSpade.svg" class="suit-icon" alt="Spades" />'
 };
 
 // DOM Elements
@@ -652,17 +652,10 @@ function computerCallTrump() {
 function showTrumpArea() {
     const trumpCornerIcons = document.getElementById('trump-corner-icons');
     if (trumpCornerIcons && gameState.trumpSuit) {
-        // Set the suit symbol for all corner icons
-        const suitSymbol = SUIT_SYMBOLS[gameState.trumpSuit];
+        const imgTag = SUIT_SYMBOLS[gameState.trumpSuit];
         const icons = trumpCornerIcons.querySelectorAll('.trump-icon');
         icons.forEach(icon => {
-            icon.textContent = suitSymbol;
-            // Add color based on suit
-            if (gameState.trumpSuit === 'hearts' || gameState.trumpSuit === 'diamonds') {
-                icon.style.color = '#e74c3c'; // Red
-            } else {
-                icon.style.color = '#2c3e50'; // Black
-            }
+            icon.innerHTML = imgTag;
         });
         trumpCornerIcons.style.display = 'block';
     }
@@ -1088,8 +1081,11 @@ function finishDiscardPhase() {
         }
     });
 
-    // Re-render hand to remove trump pickup styling
-    renderPlayerHand();
+    // Remove trump pickup styling without destroying DOM elements to prevent unwanted animation
+    const pickupCards = playerHandEl.querySelectorAll('.trump-pickup');
+    pickupCards.forEach(c => {
+        c.classList.remove('trump-pickup');
+    });
 
     // With the round cleanly starting, elegantly dismiss the remaining kitty deck off the table 
     const centerDeck = document.getElementById('center-deck');
@@ -2105,7 +2101,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         gifHtml = `<img src="${randomGif}" alt="Damnit" class="euchred-gif" />`;
 
         overlay.classList.add('team-opponent');
-        overlay.innerHTML = `<h1>Sheeeeeeit...</h1>${gifHtml}<p>They euchred you!</p>`;
+        overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you!</p>`;
     }
 
     const btnText = isGameOver ? 'Start New Game' : 'Start Next Round';
@@ -2471,7 +2467,7 @@ function updateTrickTally(playerIndex) {
         // Count how many tricks this specific player won (track per-player in gameState)
         if (!gameState.playerTricks) gameState.playerTricks = [0, 0, 0, 0];
         gameState.playerTricks[playerIndex] = (gameState.playerTricks[playerIndex] || 0) + 1;
-        tallyEl.textContent = CROWN.repeat(gameState.playerTricks[playerIndex]);
+        tallyEl.innerHTML = CROWN_SVG.repeat(gameState.playerTricks[playerIndex]);
     }
 }
 
@@ -2512,12 +2508,7 @@ function updateDealerBadges() {
         if (gameState.makerIndex !== null && index === gameState.makerIndex) {
             badge.addClass('active');
 
-            // Add "ALONE" text if maker is alone
-            if (gameState.makerIsAlone) {
-                badge.text('MAKER (ALONE)');
-            } else {
-                badge.text('MAKER');
-            }
+            badge.text('MAKER');
         } else {
             badge.removeClass('active');
         }
@@ -2582,7 +2573,9 @@ function updateSouthHandFan() {
     if (count === 0) return;
 
     const isMobile = window.innerWidth <= 480;
-    const spread = isMobile ? 20 : 24; // degrees between each card (wider on mobile for readability)
+    const spreadAngle = 24; // degrees between each card on desktop
+    const spreadMobileRem = 3; // rem distance between stacked cards on mobile
+    
     // Use Math.min(count, 5) so the fan doesn't shift left and clip when holding 6 cards (trump candidate phase)
     const centerMathCount = Math.min(count, 5);
     
@@ -2615,8 +2608,14 @@ function updateSouthHandFan() {
             card._hoverLeave = null;
             return; // skip common transform/hover code below
         } else {
-            rotation = ((i - (centerMathCount - 1) / 2) * spread);
-            baseTransform = `rotate(${rotation}deg)`;
+            const offsetMultiplier = (i - (centerMathCount - 1) / 2);
+            if (isMobile) {
+                rotation = 0;
+                baseTransform = `translateX(${offsetMultiplier * spreadMobileRem}rem)`;
+            } else {
+                rotation = offsetMultiplier * spreadAngle;
+                baseTransform = `rotate(${rotation}deg)`;
+            }
         }
 
         card.style.transform = baseTransform;
@@ -2666,17 +2665,29 @@ function renderComputerHands() {
 // Hide or show partner's hand based on going alone status
 function updatePartnerHandVisibility() {
     const handElements = [playerHandEl, westHandEl, northHandEl, eastHandEl];
+    const playerPositions = ['south', 'west', 'north', 'east'];
 
     // Show all hands by default
     handElements.forEach(handEl => {
         handEl.style.display = '';
     });
 
-    // If someone is going alone, hide their partner's hand
+    // Reset all player-info opacities
+    playerPositions.forEach(pos => {
+        const infoEl = document.querySelector(`.player-position.${pos} .player-info`);
+        if (infoEl) infoEl.style.opacity = '1';
+    });
+
+    // If someone is going alone, hide their partner's hand and dim their info badge
     if (gameState.makerIsAlone && gameState.partnerSittingOut !== null) {
         const partnerHandEl = handElements[gameState.partnerSittingOut];
         if (partnerHandEl) {
             partnerHandEl.style.display = 'none';
+        }
+
+        const partnerInfoEl = document.querySelector(`.player-position.${playerPositions[gameState.partnerSittingOut]} .player-info`);
+        if (partnerInfoEl) {
+            partnerInfoEl.style.opacity = '0.5';
         }
     }
 }
@@ -2724,7 +2735,7 @@ function createCardElement(card, index, faceDown = false) {
 
     const suitEl = document.createElement('div');
     suitEl.className = 'card-suit';
-    suitEl.textContent = SUIT_SYMBOLS[card.suit] || '';
+    suitEl.innerHTML = SUIT_SYMBOLS[card.suit] || '';
 
     // Add the card value and suit in bottom-right corner (rotated)
     const valueElBottom = document.createElement('div');
@@ -2733,7 +2744,7 @@ function createCardElement(card, index, faceDown = false) {
 
     const suitElBottom = document.createElement('div');
     suitElBottom.className = 'card-suit card-suit-bottom';
-    suitElBottom.textContent = SUIT_SYMBOLS[card.suit] || '';
+    suitElBottom.innerHTML = SUIT_SYMBOLS[card.suit] || '';
 
     cardEl.appendChild(valueEl);
     cardEl.appendChild(suitEl);

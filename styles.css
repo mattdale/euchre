@@ -183,7 +183,7 @@ h1 {
 }
 
 .tally-crown path {
-    fill: var(--color-purple-dark);
+    fill: var(--color-primary);
 }
 
 .tally-crown.won path {
@@ -330,6 +330,7 @@ h1 {
     padding: 0.5rem;
     position: relative;
     z-index: 20000;
+    transition: opacity 0.3s ease;
 }
 
 /* ── North & South — horizontal capsule pinned to top/bottom edge ─────────── */
@@ -457,9 +458,10 @@ h1 {
     color: var(--color-bg-dark);
     padding: 4px 8px;
     border-radius: 4px;
-    margin-left: 12px;
+    margin-left: 4px;
     font-weight: 600;
     display: none;
+    line-height: normal;
 }
 
 .dealer-badge.active {
@@ -476,6 +478,7 @@ h1 {
     margin-left: 6px;
     display: none;
     animation: makerBadgePulse 2s infinite;
+    line-height: normal;
 }
 
 .maker-badge.active {
@@ -544,13 +547,21 @@ h1 {
     letter-spacing: 0.04em;
 }
 
-/* Trick tally marks */
 .trick-tally {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    margin-left: 6px;
-    letter-spacing: 2px;
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    margin-left: 0px;
+    align-self: center;
+}
+
+.player-tally-crown {
+    width: 14px;
+    height: 14px;
+}
+
+.player-tally-crown path {
+    fill: var(--color-primary);
 }
 
 .trick-tally:empty {
@@ -835,8 +846,15 @@ h1 {
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    color: var(--color-primary) !important;
+    overflow: hidden; /* Hide the original image pushed outside */
+}
 
+/* Push the original SVG outside the container, and cast a solid shadow exactly back inside */
+.trump-icon .suit-icon {
+    transform: translateX(-150px);
+    filter: drop-shadow(150px 0 0 var(--color-primary));
+    width: 1.15em;
+    height: 1.15em;
 }
 
 .trump-icon.top-left {
@@ -886,7 +904,7 @@ h1 {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 0.5rem;
+    padding: 0.3rem;
     font-size: 1.2rem;
     color: var(--color-text-dark);
     cursor: pointer;
@@ -1164,7 +1182,7 @@ body.beginner-mode .card.is-trump:hover {
     cursor: default;
     pointer-events: none;
     transform: scale(1.4);
-    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s ease-in;
+    transition: transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.7s ease-in;
 }
 
 .center-deck.animate-offscreen {
@@ -1322,7 +1340,7 @@ body.beginner-mode .card.is-trump:hover {
 .user-turn-content {
     background-color: var(--color-primary);
     color: var(--color-bg-dark);
-    padding: 8px 8px 8px 12px;
+    padding: 8px 12px 8px 12px;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -1608,7 +1626,7 @@ body.beginner-mode .card.is-trump:hover {
     box-shadow: 0 0 15px var(--color-yellow-alpha-60);
     position: absolute !important;
     left: 100%;
-    margin-left: 2rem;
+    margin-left: 6rem;
     transform: rotate(15deg) translateY(-1rem);
     z-index: 100;
 }
@@ -1619,14 +1637,15 @@ body.beginner-mode .card.is-trump:hover {
 }
 
 .card-value {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1;
-    padding-left: 2px;
+    padding-left: 1px;
+    text-align: center;         
 }
 
 .card-suit {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     line-height: 1;
 }
 
@@ -1640,17 +1659,17 @@ body.beginner-mode .card.is-trump:hover {
 }
 
 .card-value-bottom {
-    font-size: 1.2rem;
-    font-weight: bold;
+    font-size: 1rem;
+    font-weight: 600;
     line-height: 1;
     bottom: 0.5rem;
     /* Positioned below the suit when rotated */
 }
 
 .card-suit-bottom {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     line-height: 1;
-    bottom: 1.7rem;
+    bottom: 1.55rem;
     /* Positioned above the value when rotated */
 }
 
@@ -1755,6 +1774,7 @@ body.beginner-mode .card.is-trump:hover {
         margin-right: 0 !important;
         margin-bottom: 0;
         display: none;
+        line-height: normal;
     }
 
     .player-position.west .dealer-badge.active,
@@ -1771,7 +1791,7 @@ body.beginner-mode .card.is-trump:hover {
     /* Fix user turn dialog layout for tablet/mobile — stack text and actions vertically */
     .user-turn-content {
         flex-direction: column;
-        padding: 16px 12px;
+        padding: 12px 12px;
         max-width: 95vw;
         white-space: normal;   /* override base nowrap so text wraps */
         word-break: break-word;
@@ -1780,17 +1800,17 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     #user-turn-message {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         margin: 0;
         color: var(--color-bg-dark);
         font-weight: 500;
-        line-height: 140%;
+        line-height: 125%;
         white-space: normal;
     }
 
     .dialog-text {
         font-size: 0.9rem;
-        gap: 6px;
+        gap: 4px;
         flex-flow: column;
         white-space: normal;
     }
@@ -1806,7 +1826,7 @@ body.beginner-mode .card.is-trump:hover {
 
     .dialog-actions.show {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: inherit;
         justify-content: center;
         align-items: center;
         width: 100%;
@@ -1911,7 +1931,6 @@ body.beginner-mode .card.is-trump:hover {
 
     .card-suit {
         font-size: 1rem;
-        padding-top: 2px;
     }
 
     .card-value,
@@ -1930,19 +1949,19 @@ body.beginner-mode .card.is-trump:hover {
         margin-left: -51px;
         font-size: 1.15rem;
         padding: 4px 6px;
-        bottom: 0;
+        bottom: -32px;
         top: auto;
         transform-origin: bottom center;
     }
 
     /* Scale up suit icon and value text inside south hand cards to match bigger size */
     .player-position.south .hand .card-suit {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
 
     .player-position.south .hand .card-value,
     .player-position.south .hand .card-value-bottom {
-        font-size: 1rem;
+        font-size: 1.2rem;
     }
 
     .player-position.south .card:hover {
@@ -2014,16 +2033,13 @@ body.beginner-mode .card.is-trump:hover {
         right: 0;
     }
 
-    .card.trump-pickup {
-        border: 3px solid var(--color-yellow);
-        box-shadow: 0 0 15px var(--color-yellow-alpha-60);
-        position: absolute !important;
-        left: 50%;
-        margin-left: 0;
-        transform: translateX(3rem) translateY(-10rem) rotate(15deg);
-        z-index: 20000;
-        bottom: 1rem;
-        right: 3rem;
+    /* ═══ Prevent rotation animation on mobile when cards are re-rendered ═══ */
+    .player-position.south .hand .card:nth-child(1),
+    .player-position.south .hand .card:nth-child(2),
+    .player-position.south .hand .card:nth-child(3),
+    .player-position.south .hand .card:nth-child(4),
+    .player-position.south .hand .card:nth-child(5) {
+        transform: rotate(0deg) translateX(0);
     }
 
     /* ═══ Vertical hand card overlap — tighter on mobile ═══ */
@@ -2061,8 +2077,8 @@ body.beginner-mode .card.is-trump:hover {
 
     .dealer-badge,
     .maker-badge {
-        font-size: 0.7rem;
-        padding: 3px 4px 2px 4px;
+        font-size: 0.65rem;
+        padding: 3px 4px;
         margin-left: 0;
     }
 
@@ -2111,14 +2127,12 @@ body.beginner-mode .card.is-trump:hover {
     }
 
     .trick-tally svg {
-        width: 8px;
-        height: 8px;
+        width: 14px;
+        height: 14px;
+        color: var(--color-primary);
     }
 
-    /* ═══ South hand hover — disable rotation scale on mobile ═══ */
-    .player-position.south .hand .card:not(.card-back):hover {
-        transform: none !important;
-    }
+
 
     /* ═══ Euchred overlay — mobile ═══ */
     .euchred-overlay {
@@ -2127,11 +2141,20 @@ body.beginner-mode .card.is-trump:hover {
         justify-content: center;
     }
 
-    .euchred-overlay.team-you h1,
-    .euchred-overlay.team-opponent h1 {
+    .euchred-overlay.team-you h1 {
         color: var(--color-yellow);
         font-size: 4rem !important;
         margin: 0 0 4px;
+        line-height: 1;
+        text-shadow: none;
+    }
+
+    .euchred-overlay.team-opponent h1 {
+        color: var(--color-red);
+        /* Slightly smaller to ensure "Sheeeit..." fits without overflowing */
+        font-size: clamp(2.5rem, 12vw, 3.5rem) !important; 
+        margin: 0 0 4px;
+        line-height: 1;
         text-shadow: none;
     }
 
@@ -2154,8 +2177,8 @@ body.beginner-mode .card.is-trump:hover {
 
     /* ═══ User turn dialog ═══ */
     .user-turn-dialog {
-        bottom: 10rem;
-        width: 80vw;
+        bottom: 9rem;
+        width: auto;
     }
 
     .suit-card {
@@ -2384,6 +2407,13 @@ body.beginner-mode .card.is-trump:hover {
     font-weight: 600;
 }
 
+/* Custom SVG suit icons */
+.suit-icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+}
+
 /* Switch styling for checkbox */
 .switch {
     position: relative;
@@ -2447,12 +2477,13 @@ input:checked+.slider:before {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh; /* dynamically adjusts for mobile browser toolbars */
     background: var(--color-shadow-80);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    padding-bottom: 3rem; /* shift content slightly up for better visual balance */
     z-index: 99999;
     opacity: 0;
     pointer-events: none;
