@@ -2114,7 +2114,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you!</p>`;
     }
 
-    const btnText = isGameOver ? 'Start New Game' : 'Start Next Round';
+    const btnText = isGameOver ? 'Continue' : 'Start Next Round';
     overlay.innerHTML += `<button id="euchred-continue-btn" class="dialog-btn">${btnText}</button>`;
 
     // Add event listener to the button

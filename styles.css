@@ -334,6 +334,18 @@ h1 {
     transition: opacity 0.3s ease;
 }
 
+.player-info {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: background-color, box-shadow;
+    transform: translateZ(0); /* Force hardware acceleration to prevent SVG jitter during animations */
+}
+
+.player-name {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
 /* ── North & South — horizontal capsule pinned to top/bottom edge ─────────── */
 .player-position.north .player-info,
 .player-position.south .player-info {
@@ -560,6 +572,9 @@ h1 {
 .player-tally-crown {
     width: 14px;
     height: 14px;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 .player-tally-crown path {
@@ -2136,6 +2151,9 @@ body.beginner-mode .card.is-trump:hover {
         width: 14px;
         height: 14px;
         color: var(--color-primary);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        transform: translateZ(0);
     }
 
 
@@ -2178,7 +2196,40 @@ body.beginner-mode .card.is-trump:hover {
     #euchred-continue-btn {
         margin-top: 12px;
         padding: 10px 20px;
-        font-size: 1rem;
+        font-size: 1.1rem;
+    }
+
+    /* ═══ Game Won overlay — mobile ═══ */
+    .game-won-overlay {
+        padding: 16px;
+        gap: 0;
+        justify-content: center;
+    }
+
+    .game-won-overlay h1 {
+        font-size: clamp(3rem, 15vw, 4.5rem) !important;
+        margin: 0 0 4px;
+        line-height: 1.1;
+        text-shadow: none;
+        text-align: center;
+    }
+
+    .game-won-overlay p {
+        font-size: 1.5rem !important;
+        color: var(--color-primary);
+        margin-top: 4px;
+        text-align: center;
+    }
+
+    .game-won-gif {
+        max-width: min(280px, 85vw);
+        margin: 10px 0;
+    }
+
+    #game-won-continue-btn {
+        margin-top: 12px;
+        padding: 10px 20px;
+        font-size: 1.1rem;
     }
 
     /* ═══ User turn dialog ═══ */
