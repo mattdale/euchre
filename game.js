@@ -494,9 +494,14 @@ function computerBid() {
 
         let shouldOrderUp = strength >= orderUpThreshold;
 
-        // Random element for variety (much less random in Intense)
-        const randomness = difficulty === 'casual' ? 0.3 : (difficulty === 'intermediate' ? 0.15 : 0.03);
-        if (Math.random() < randomness) shouldOrderUp = !shouldOrderUp;
+        // Random element for variety (disabled in Intense, and only for borderline hands)
+        if (difficulty !== 'intense') {
+            const randomness = difficulty === 'casual' ? 0.3 : 0.15;
+            // Only invert decision if strength is within 2.5 points of the threshold
+            if (Math.abs(strength - orderUpThreshold) <= 2.5 && Math.random() < randomness) {
+                shouldOrderUp = !shouldOrderUp;
+            }
+        }
 
         const shouldGoAlone = strength >= aloneThreshold;
 
@@ -571,6 +576,18 @@ function computerCallTrump() {
     const nextSuit = getNextSuit(candidateSuit);
     const crossSuits = getCrossSuits(candidateSuit);
 
+    // Thresholds for calling trump in Round 2
+    let callThreshold = 7;
+    let aloneThreshold = 14;
+
+    if (difficulty === 'casual') {
+        callThreshold = 10;
+        aloneThreshold = 17;
+    } else if (difficulty === 'intermediate') {
+        callThreshold = 8;
+        aloneThreshold = 15;
+    }
+
     if (difficulty === 'intense' && !isStickTheDealer) {
         const firstPlayerAfterDealer = (gameState.dealer + 1) % 4;
         const thirdPlayerAfterDealer = (gameState.dealer + 3) % 4;
@@ -582,6 +599,7 @@ function computerCallTrump() {
             if (nextStrength >= 4) { // Very low threshold for "Next" — statistically strong play
                 bestSuit = nextSuit;
                 bestStrength = nextStrength;
+                callThreshold = 4; // Crucial fix: actually lower the threshold so it gets called
             }
         }
 
@@ -590,18 +608,6 @@ function computerCallTrump() {
         if (crossSuits.includes(bestSuit)) {
             bestStrength -= 2; // Penalize green calls — they need to be very strong
         }
-    }
-
-    // Thresholds for calling trump in Round 2
-    let callThreshold = 7;
-    let aloneThreshold = 14;
-
-    if (difficulty === 'casual') {
-        callThreshold = 10;
-        aloneThreshold = 17;
-    } else if (difficulty === 'intermediate') {
-        callThreshold = 8;
-        aloneThreshold = 15;
     }
 
     // Score pressure for Intense
@@ -621,9 +627,14 @@ function computerCallTrump() {
 
     let shouldCall = bestStrength >= callThreshold || isStickTheDealer;
 
-    // Random factor (very low for Intense)
-    const randomness = difficulty === 'casual' ? 0.3 : (difficulty === 'intermediate' ? 0.15 : 0.03);
-    if (!isStickTheDealer && Math.random() < randomness) shouldCall = !shouldCall;
+    // Random element for variety (disabled in Intense, and only for borderline hands)
+    if (difficulty !== 'intense' && !isStickTheDealer) {
+        const randomness = difficulty === 'casual' ? 0.3 : 0.15;
+        // Only invert decision if strength is within 2.5 points of the threshold
+        if (Math.abs(bestStrength - callThreshold) <= 2.5 && Math.random() < randomness) {
+            shouldCall = !shouldCall;
+        }
+    }
 
     const shouldGoAlone = bestStrength >= aloneThreshold;
 
@@ -1127,8 +1138,8 @@ function pass() {
     if (gameState.settings.stickTheDealer && gameState.biddingRound === 2 &&
         gameState.currentPlayer === gameState.dealer &&
         gameState.passedPlayers.length === 3) {
-        console.error('Dealer cannot pass when stuck! Must name trump.');
-        messageEl.textContent = 'You cannot pass - you must name trump! (Stick the Dealer)';
+        console.error('Dealer can\'t pass when stuck! Must name trump.');
+        messageEl.textContent = 'You can\'t pass—you gotta name trump. (Stick the Dealer)';
         // Force the player to choose
         if (gameState.currentPlayer === 0) {
             showUserTurnDialog('You must name trump:', 'suit_selection_forced');
@@ -1155,7 +1166,7 @@ function pass() {
             gameState.passedPlayers = [];
             // Second round also starts with player to left of dealer (clockwise)
             gameState.currentPlayer = (gameState.dealer + 1) % 4;
-            messageEl.textContent = 'All passed. Now players can call trump suit...';
+            messageEl.textContent = 'All passed. Players can now call trump suit...';
             setTimeout(startBidding, 1800); // Slowed from 1500 to 1800
         } else {
             if (gameState.settings.stickTheDealer) {
@@ -1164,7 +1175,7 @@ function pass() {
                 // Fallback: force dealer to pick
                 gameState.currentPlayer = gameState.dealer;
                 gameState.passedPlayers.pop(); // Remove dealer from passed list
-                messageEl.textContent = 'Dealer must name trump! (Stick the Dealer)';
+                messageEl.textContent = 'Dealer must name trump. (Stick the Dealer)';
                 setTimeout(startBidding, 1800);
             } else {
                 // Hand is tossed, move to next dealer
@@ -1218,9 +1229,9 @@ function startTrick() {
         if (gameState.currentPlayer === 0) {
             gameState.isProcessingTurn = false; // Release lock before giving control to player
             enableCardSelection();
-            messageEl.textContent = 'Your turn. Select a card to play.';
+            messageEl.textContent = 'Your turn. Play a card.';
             // Show prominent user turn dialog
-            showUserTurnDialog('Select a card to play');
+            showUserTurnDialog('Play a card');
         } else {
             computerPlayCard();
         }
@@ -1269,8 +1280,8 @@ function computerPlayCard() {
                             }
                         } else {
                             enableCardSelection();
-                            messageEl.textContent = 'Your turn. Select a card to play.';
-                            showUserTurnDialog('Select a card to play');
+                            messageEl.textContent = 'Your turn. Play a card.';
+                            showUserTurnDialog('Play a card');
                         }
                     } else {
                         computerPlayCard();
@@ -1847,9 +1858,9 @@ function determineTrickWinner() {
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
     // Don't overwrite the tally display — update message but keep tally visible
     if (actualWinnerIndex === 0) {
-        messageEl.textContent = 'You win the trick!';
+        messageEl.textContent = 'You won the trick!';
     } else {
-        messageEl.textContent = `${playerNames[actualWinnerIndex]} wins the trick!`;
+        messageEl.textContent = `${playerNames[actualWinnerIndex]} won the trick!`;
     }
 
     // Animate trick cards to winner
@@ -2040,10 +2051,10 @@ function showGameWonOverlay(isPlayerWin) {
 
     if (isPlayerWin) {
         overlay.classList.add('team-you');
-        overlay.innerHTML = `<h1>YOU WON!</h1>${gifHtml}<p>Great job!</p>`;
+        overlay.innerHTML = `<h1>You won!</h1>${gifHtml}<p>Don\'t let it inflate your ego.</p>`;
     } else {
         overlay.classList.add('team-opponent');
-        overlay.innerHTML = `<h1>GAME OVER</h1>${gifHtml}<p>They beat you...</p>`;
+        overlay.innerHTML = `<h1>Game Over</h1>${gifHtml}<p>They kicked your butt...</p>`;
     }
 
     overlay.innerHTML += `<button id="game-won-continue-btn" class="dialog-btn">Play again</button>`;
@@ -2099,7 +2110,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         gifHtml = `<img src="${randomGif}" alt="Airhump" class="euchred-gif" />`;
 
         overlay.classList.add('team-you');
-        overlay.innerHTML = `<h1>Nice.</h1>${gifHtml}<p>You euchred those fucks!</p>`;
+        overlay.innerHTML = `<h1>Nice</h1>${gifHtml}<p>You euchred those fucks!</p>`;
     } else {
         const damnitGifs = [
             'https://media.tenor.com/nUwPBNi-GOoAAAAM/shit-leslie-jordan.gif',
@@ -2111,7 +2122,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         gifHtml = `<img src="${randomGif}" alt="Damnit" class="euchred-gif" />`;
 
         overlay.classList.add('team-opponent');
-        overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you!</p>`;
+        overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you...</p>`;
     }
 
     const btnText = isGameOver ? 'Continue' : 'Start Next Round';
@@ -2419,7 +2430,7 @@ function showUserTurnDialog(message, dialogType = 'info') {
             if (suit === candidateSuit) {
                 card.style.opacity = '0.3';
                 card.style.pointerEvents = 'none';
-                card.title = 'Cannot call this suit (was turned down)';
+                card.title = 'Can\'t call this suit (was turned down)';
             } else {
                 card.style.opacity = '1';
                 card.style.pointerEvents = 'auto';
@@ -3296,7 +3307,7 @@ function handleCardClick(event) {
     if (!canPlayCard(card, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit)) {
         if (gameState.leadSuit) {
             const leadSuitName = gameState.leadSuit.charAt(0).toUpperCase() + gameState.leadSuit.slice(1);
-            showRulePopup(`You gotta follow suit! Play a ${leadSuitName}, fucker`);
+            showRulePopup(`You gotta follow suit! Play a ${leadSuitName}, dude.`);
         }
         return;
     }
