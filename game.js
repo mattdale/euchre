@@ -1982,6 +1982,9 @@ function endHand() {
     console.log('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
     console.log('New score:', gameState.score);
 
+    // Immediately clear all turn indicators since the round is over
+    clearTurnIndicators();
+
     // Switch back to message mode for scoring summary
     showMessageMode();
 
@@ -2449,16 +2452,20 @@ function hideUserTurnDialog() {
     $(userTurnDialog).fadeOut(300);
 }
 
-// Update turn indicators
-function updateTurnIndicators() {
+// Clear all turn indicators
+function clearTurnIndicators() {
     const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
-
-    // Remove active class from all indicators
     indicators.forEach(id => {
         $('#' + id).removeClass('active');
     });
+}
+
+// Update turn indicators
+function updateTurnIndicators() {
+    clearTurnIndicators();
 
     // Add active class to current player's indicator
+    const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
     $('#' + indicators[gameState.currentPlayer]).addClass('active');
 }
 
