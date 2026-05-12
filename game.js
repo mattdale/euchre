@@ -3156,34 +3156,47 @@ function animateCardFromCenter(card, playerIndex, dealIndex) {
         const animatingCard = playerIndex === 0 ?
             createCardElement(card) : createCardBackElement();
 
-        // Position it exactly where the deck card is
+        // Temporarily append to measure standard unscaled dimensions
+        animatingCard.style.visibility = 'hidden';
         animatingCard.style.position = 'fixed';
+        document.body.appendChild(animatingCard);
+        
+        const standardRect = animatingCard.getBoundingClientRect();
+        const startScale = deckCardRect.width / standardRect.width;
+
+        // Get the CSS scale property from the target hand to know final size
+        const targetStyle = window.getComputedStyle(targetHandEl);
+        const targetScale = targetStyle.scale !== 'none' ? parseFloat(targetStyle.scale) : 1.0;
+
+        // Position it exactly where the deck card is using top-left origin + scale
+        animatingCard.style.visibility = 'visible';
         animatingCard.style.margin = '0';
         animatingCard.style.left = deckCardRect.left + 'px';
         animatingCard.style.top = deckCardRect.top + 'px';
-        animatingCard.style.width = deckCardRect.width + 'px';
-        animatingCard.style.height = deckCardRect.height + 'px';
+        animatingCard.style.transformOrigin = 'top left';
+        animatingCard.style.transform = `scale(${startScale})`;
         animatingCard.style.zIndex = '1000';
         animatingCard.style.pointerEvents = 'none';
 
-        // Remove the deck card and add the animating card
+        // Remove the deck card
         topDeckCard.remove();
-        document.body.appendChild(animatingCard);
 
-        // Calculate target position
-        const endX = targetRect.left + targetRect.width / 2 - deckCardRect.width / 2;
-        const endY = targetRect.top + targetRect.height / 2 - deckCardRect.height / 2;
+        // Calculate target position based on final scaled dimensions
+        const finalWidth = standardRect.width * targetScale;
+        const finalHeight = standardRect.height * targetScale;
+        const finalLeft = targetRect.left + targetRect.width / 2 - finalWidth / 2;
+        const finalTop = targetRect.top + targetRect.height / 2 - finalHeight / 2;
+
+        const deltaX = finalLeft - deckCardRect.left;
+        const deltaY = finalTop - deckCardRect.top;
 
         // Force reflow then add hardware-accelerated transition
         animatingCard.offsetHeight;
         animatingCard.style.transition = 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
         animatingCard.style.willChange = 'transform';
 
-        const deltaX = endX - deckCardRect.left;
-        const deltaY = endY - deckCardRect.top;
-
         setTimeout(() => {
-            animatingCard.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            animatingCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${targetScale})`;
             // No rotation during animation — CSS fan handles final rotation
         }, 100);
 
