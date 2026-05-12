@@ -3276,7 +3276,7 @@ function handleCardClick(event) {
     if (!canPlayCard(card, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit)) {
         if (gameState.leadSuit) {
             const leadSuitName = gameState.leadSuit.charAt(0).toUpperCase() + gameState.leadSuit.slice(1);
-            showRulePopup(`You must follow suit! Play a ${leadSuitName} if you have one.`);
+            showRulePopup(`You gotta follow suit! Play a ${leadSuitName}, fucker`);
         }
         return;
     }
