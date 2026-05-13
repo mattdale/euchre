@@ -36,7 +36,16 @@ let gameState = {
         stickTheDealer: true,
         beginnerMode: false,
         difficulty: 'intense'
-    }
+    },
+    fastForward: false,
+    fastForwardTimer: null
+};
+
+// Override setTimeout to support fast-forwarding game logic
+const originalSetTimeout = window.setTimeout;
+window.setTimeout = function(callback, delay, ...args) {
+    const multiplier = gameState.fastForward ? 0.25 : 1; // 4x faster
+    return originalSetTimeout(callback, delay * multiplier, ...args);
 };
 
 // Card suits and values
@@ -2041,6 +2050,9 @@ function endGame() {
 
 // Show the Game Won overlay effect
 function showGameWonOverlay(isPlayerWin) {
+    // Force cancel any active fast-forwarding when game is over
+    if (window.cancelFastForward) window.cancelFastForward();
+
     const overlay = document.getElementById('game-won-overlay');
     if (!overlay) return;
 
@@ -2092,6 +2104,9 @@ function getCardName(card) {
 
 // Show the Euchred overlay effect
 function showEuchredOverlay(scoringTeam, isGameOver = false) {
+    // Force cancel any active fast-forwarding during overlays
+    if (window.cancelFastForward) window.cancelFastForward();
+
     const overlay = document.getElementById('euchred-overlay');
     if (!overlay) return;
 
@@ -2405,6 +2420,9 @@ function showUserTurnDialog(message, dialogType = 'info') {
         console.warn('Attempted to show user dialog when it\'s not user\'s turn. Current player:', gameState.currentPlayer);
         return;
     }
+
+    // Force cancel any active fast-forwarding since the game is pausing for user input
+    if (window.cancelFastForward) window.cancelFastForward();
 
     userTurnMessage.textContent = message;
     userTurnTitle.textContent = 'Your Turn!';
@@ -3395,6 +3413,65 @@ window.addEventListener('DOMContentLoaded', () => {
     // Set game phase to setup so deck click works
     gameState.gamePhase = 'setup';
 
+    // Fast-Forward Easter Egg Logic
+    const gameContainer = document.querySelector('.game-container');
+    if (gameContainer) {
+        const startFastForwardTimer = (e) => {
+            // Only trigger on game-board/container itself, not on interactive elements like cards/buttons
+            if (e.target.closest('.card') || e.target.closest('button') || e.target.closest('.dialog-overlay')) return;
+            
+            // Disable if game hasn't started
+            if (gameState.gamePhase === 'setup') return;
+
+            // Disable if blocking overlays or options dialog are open
+            if (document.querySelector('.euchred-overlay.active') ||
+                document.querySelector('.game-won-overlay.active') ||
+                document.querySelector('.settings-modal.active')) {
+                return;
+            }
+
+            // Disable if it's the player's turn to act
+            if (gameState.currentPlayer === 0 && !gameState.isProcessingTurn && 
+                ['bidding', 'discarding', 'playing'].includes(gameState.gamePhase)) {
+                return;
+            }
+            
+            if (gameState.fastForwardTimer) clearTimeout(gameState.fastForwardTimer);
+            // Use originalSetTimeout so the timer itself doesn't get accelerated
+            gameState.fastForwardTimer = originalSetTimeout(() => {
+                gameState.fastForward = true;
+                document.body.classList.add('fast-forward');
+                const glitchVideo = document.getElementById('glitch-overlay');
+                if (glitchVideo) glitchVideo.play().catch(e => console.log('Video autoplay prevented', e));
+                console.log("Fast-forward enabled");
+            }, 200);
+        };
+
+        const stopFastForwardTimer = () => {
+            if (gameState.fastForwardTimer) {
+                clearTimeout(gameState.fastForwardTimer);
+                gameState.fastForwardTimer = null;
+            }
+            if (gameState.fastForward) {
+                gameState.fastForward = false;
+                document.body.classList.remove('fast-forward');
+                const glitchVideo = document.getElementById('glitch-overlay');
+                if (glitchVideo) glitchVideo.pause();
+                console.log("Fast-forward disabled");
+            }
+        };
+
+        // Expose globally so we can aggressively cancel it when user gets control
+        window.cancelFastForward = stopFastForwardTimer;
+
+        gameContainer.addEventListener('mousedown', startFastForwardTimer);
+        gameContainer.addEventListener('touchstart', startFastForwardTimer, { passive: true });
+
+        window.addEventListener('mouseup', stopFastForwardTimer);
+        window.addEventListener('touchend', stopFastForwardTimer);
+        window.addEventListener('touchcancel', stopFastForwardTimer);
+    }
+
     // Populate the center deck so it's visible from the start
     populateCenterDeck();
 
@@ -3488,6 +3565,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     if (settingsBtn && settingsModal && closeSettingsBtn) {
         settingsBtn.addEventListener('click', () => {
+            if (window.cancelFastForward) window.cancelFastForward();
             // Apply current settings
             settingWinningScore.value = gameState.settings.winningScore;
             settingStickDealer.checked = gameState.settings.stickTheDealer;

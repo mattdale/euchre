@@ -187,6 +187,11 @@ h1 {
     fill: var(--color-primary);
 }
 
+.team-tally-crowns .tally-crown path {
+    fill: var(--color-purple-dark);
+}
+
+
 .tally-crown.won path {
     fill: var(--color-yellow);
     /* Use the Fill version of the simple crown path */
@@ -2667,4 +2672,36 @@ input:checked+.slider:before {
     color: var(--color-light);
     margin-top: 10px;
     animation: slideUp 0.7s ease;
+}
+
+/* Settings Icon Hover Effect */
+.settings-btn:hover .gear-outline {
+    display: none;
+}
+.settings-btn:hover .gear-fill {
+    display: block !important;
+}
+
+/* ═══ Fast-Forward Easter Egg ═══ */
+body.fast-forward * {
+    transition-duration: 0.15s !important;
+    animation-duration: 0.15s !important;
+}
+
+.glitch-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    object-fit: cover;
+    z-index: 99999;
+    mix-blend-mode: hard-light;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+body.fast-forward .glitch-overlay {
+    opacity: 0.6; /* Adjust for desired intensity */
 }
