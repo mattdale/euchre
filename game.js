@@ -2420,7 +2420,7 @@ function updateSouthHandFan() {
                 baseTransform = `translateX(${offset}rem) translateY(-0.75rem)`;
             } else {
                 // Just right of the fan, tilted, fully on screen.
-                baseTransform = 'translateX(8.5rem) translateY(-0.5rem) rotate(12deg)';
+                baseTransform = 'translateX(var(--pickup-x, 8.5rem)) translateY(-0.5rem) rotate(12deg)';
             }
             card.style.transform = baseTransform;
             card.style.setProperty('--fan-rotation', isMobile ? '0deg' : '12deg');
