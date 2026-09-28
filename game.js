@@ -48,9 +48,76 @@ window.setTimeout = function(callback, delay, ...args) {
     return originalSetTimeout(callback, delay * multiplier, ...args);
 };
 
-// Card suits and values
-const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
-const VALUES = ['9', '10', 'J', 'Q', 'K', 'A'];
+// Pure Euchre rules live in rules.js (loaded before this file) so they can be unit tested.
+const {
+    SUITS,
+    createDeck,
+    getNextSuit,
+    getCrossSuits,
+    getEffectiveSuit,
+    isCardTrump,
+    getEuchreCardValue,
+    isCardHigher,
+    canPlayCard,
+    getTrickWinner,
+    getPartnerIndex,
+    teamOf,
+    scoreHand,
+    getGameWinner,
+    evaluateHandStrength,
+    getCardName
+} = window.EuchreRules;
+
+// Settings, the game in progress and lifetime stats persist in localStorage (see storage.js).
+const store = window.EuchreStorage.createStore();
+
+// Verbose turn-by-turn logging. Off by default: formatting ~100 log lines per hand is
+// wasted work for players. Turn on with ?debug in the URL.
+const DEBUG = new URLSearchParams(location.search).has('debug');
+const debugLog = DEBUG ? console.log.bind(console) : () => {};
+
+// Honor the OS "reduce motion" setting for JS fades too (CSS transitions are handled in styles.css)
+const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+// ─── Fades (Web Animations API; replaces jQuery's fadeIn/fadeOut) ────────
+// Opacity-only animations run on the compositor. A new fade cancels one in flight,
+// so the element always ends in the state that was asked for last.
+
+function isShown(el) {
+    return !!el && el.getClientRects().length > 0;
+}
+
+function cancelFade(el) {
+    if (el._fade) {
+        el._fade.onfinish = null;
+        el._fade.cancel();
+        el._fade = null;
+    }
+}
+
+function fadeIn(el, duration = 400) {
+    if (!el) return;
+    cancelFade(el);
+    el.style.display = '';
+    if (getComputedStyle(el).display === 'none') el.style.display = 'block';
+    if (prefersReducedMotion) return;
+    el._fade = el.animate([{ opacity: 0 }, { opacity: getComputedStyle(el).opacity }], { duration, easing: 'ease-in-out' });
+    el._fade.onfinish = () => { el._fade = null; };
+}
+
+function fadeOut(el, duration = 400, onDone) {
+    if (!el) return;
+    cancelFade(el);
+    const finish = () => {
+        el._fade = null;
+        el.style.display = 'none';
+        onDone?.();
+    };
+    if (!isShown(el) || prefersReducedMotion) return finish();
+    el._fade = el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration, easing: 'ease-in-out' });
+    el._fade.onfinish = finish;
+}
+
 const SUIT_SYMBOLS = {
     'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
     'diamonds': '<img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" />',
@@ -101,6 +168,8 @@ function showMessageMode() {
     // No-op - tally crowns stay visible until reset
 }
 
+const trickCountLabel = n => `${n} ${n === 1 ? 'trick' : 'tricks'} this hand`;
+
 // Re-render the crown marks for each team based on current tricksThisHand
 function updateTrickTallyDisplay() {
     if (!team1TallyCrowns || !team2TallyCrowns) return;
@@ -115,6 +184,9 @@ function updateTrickTallyDisplay() {
         }
     });
 
+    team1TallyCrowns.setAttribute('aria-label', trickCountLabel(gameState.tricksThisHand.team0));
+    team2TallyCrowns.setAttribute('aria-label', trickCountLabel(gameState.tricksThisHand.team1));
+
     // Update team 2 crowns
     const t2Crowns = team2TallyCrowns.querySelectorAll('.tally-crown');
     t2Crowns.forEach((crown, i) => {
@@ -128,6 +200,13 @@ function updateTrickTallyDisplay() {
 
 // Start a new game (called when deck is clicked)
 function startNewGame() {
+    // Leave 'setup' right away so a second click can't start a parallel game
+    gameState.gamePhase = 'dealing';
+    gameState.score = [0, 0];
+    gameState.makerIndex = null;
+    store.clearGame();
+    updateUI();
+
     // Show starting message
     messageEl.textContent = 'Starting game...';
 
@@ -215,30 +294,10 @@ function initGame() {
     // setTimeout(startBidding, 5000); // REMOVED - duplicate call
 }
 
-// Create a standard deck of 24 cards (9-Ace of each suit)
-function createDeck() {
-    const deck = [];
-    for (const suit of SUITS) {
-        for (const value of VALUES) {
-            deck.push({ suit, value });
-        }
-    }
-    return shuffleDeck(deck);
-}
-
-// Shuffle the deck using Fisher-Yates algorithm
-function shuffleDeck(deck) {
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
-}
-
 // Deal cards to all players with animation in Euchre style (3-2-3-2)
 function dealCards() {
     // Clear all hands first
-    $('.hand').empty();
+    document.querySelectorAll('.hand').forEach(hand => hand.replaceChildren());
 
     // Ensure all hand containers are visible (reset from going alone)
     const handElements = [playerHandEl, westHandEl, northHandEl, eastHandEl];
@@ -287,20 +346,20 @@ function dealCards() {
     }
 
     // The top card of the remaining deck is the potential trump
-    console.log('Deck length before trump candidate:', gameState.deck.length);
+    debugLog('Deck length before trump candidate:', gameState.deck.length);
     const topCard = gameState.deck.pop();
     if (topCard) {
         gameState.deck.push(topCard); // Put it back for now
         gameState.trumpCandidate = topCard; // Set it immediately
-        console.log('Trump candidate set:', topCard);
+        debugLog('Trump candidate set:', topCard);
     } else {
         console.error('No cards left in deck for trump candidate!');
     }
 
     // Debug: Log hand sizes after dealing
-    console.log('After dealing - Player hand size:', gameState.playerHand.length);
-    console.log('After dealing - Computer hands:', gameState.computerHands.map(hand => hand.length));
-    console.log('After dealing - Deck remaining:', gameState.deck.length);
+    debugLog('After dealing - Player hand size:', gameState.playerHand.length);
+    debugLog('After dealing - Computer hands:', gameState.computerHands.map(hand => hand.length));
+    debugLog('After dealing - Deck remaining:', gameState.deck.length);
 
     // After all cards are dealt, show trump candidate (keep deck visible)
     setTimeout(() => {
@@ -311,13 +370,13 @@ function dealCards() {
 // Start the bidding phase
 function startBidding() {
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
-    console.log('=== startBidding called ===');
-    console.log('Current player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
-    console.log('Passed players:', gameState.passedPlayers);
+    debugLog('=== startBidding called ===');
+    debugLog('Current player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
+    debugLog('Passed players:', gameState.passedPlayers);
 
     // If trump is already set, don't continue bidding
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ending bidding phase');
+        debugLog('Trump already set, ending bidding phase');
         return;
     }
 
@@ -374,9 +433,9 @@ function startBidding() {
             // Show prominent user turn dialog with bidding buttons
             showUserTurnDialog(`Order up ${getCardName(candidateCard)}?`, 'bidding');
         } else {
-            console.log('=== Starting computer turn ===');
-            console.log('Player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
-            console.log('Bidding round:', gameState.biddingRound);
+            debugLog('=== Starting computer turn ===');
+            debugLog('Player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
+            debugLog('Bidding round:', gameState.biddingRound);
             messageEl.textContent = `${playerNames[gameState.currentPlayer]}'s turn. Order up ${getCardName(candidateCard)}?`;
             setTimeout(computerBid, 1950); // Sped up for slightly faster AI thinking
         }
@@ -413,24 +472,24 @@ function startBidding() {
 function computerBid() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to bid while turn is already processing - skipping');
+        debugLog('AI tried to bid while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI bid
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to bid on player turn - skipping');
+        debugLog('AI tried to bid on player turn - skipping');
         return;
     }
 
     gameState.isProcessingTurn = true;
     gameState.lastStateChange = Date.now();
 
-    console.log('computerBid called for player:', gameState.currentPlayer);
+    debugLog('computerBid called for player:', gameState.currentPlayer);
 
     // Prevent duplicate calls if trump is already set
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring computerBid call');
+        debugLog('Trump already set, ignoring computerBid call');
         gameState.isProcessingTurn = false;
         return;
     }
@@ -532,24 +591,24 @@ function computerBid() {
 function computerCallTrump() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to call trump while turn is already processing - skipping');
+        debugLog('AI tried to call trump while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI play
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to call trump on player turn - skipping');
+        debugLog('AI tried to call trump on player turn - skipping');
         return;
     }
 
     gameState.isProcessingTurn = true;
     gameState.lastStateChange = Date.now();
 
-    console.log('computerCallTrump called for player:', gameState.currentPlayer);
+    debugLog('computerCallTrump called for player:', gameState.currentPlayer);
 
     // Prevent duplicate calls if trump is already set
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring computerCallTrump call');
+        debugLog('Trump already set, ignoring computerCallTrump call');
         gameState.isProcessingTurn = false;
         return;
     }
@@ -679,6 +738,8 @@ function showTrumpArea() {
         });
         trumpCornerIcons.style.display = 'block';
     }
+    const trumpStatus = document.getElementById('trump-status');
+    if (trumpStatus && gameState.trumpSuit) trumpStatus.textContent = `Trump: ${gameState.trumpSuit}`;
 }
 
 // Hide the trump corner icons
@@ -687,6 +748,8 @@ function hideTrumpArea() {
     if (trumpCornerIcons) {
         trumpCornerIcons.style.display = 'none';
     }
+    const trumpStatus = document.getElementById('trump-status');
+    if (trumpStatus) trumpStatus.textContent = '';
 }
 
 // Player orders up the top card
@@ -695,7 +758,7 @@ function orderUp(suit, goingAlone = false) {
 
     // Prevent duplicate calls
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring duplicate orderUp call');
+        debugLog('Trump already set, ignoring duplicate orderUp call');
         return;
     }
 
@@ -709,7 +772,7 @@ function orderUp(suit, goingAlone = false) {
     gameState.makerTeam = (gameState.makerIndex === 0 || gameState.makerIndex === 2) ? 0 : 1;
     gameState.makerIsAlone = goingAlone;
 
-    console.log('Trump made by player:', gameState.makerIndex, 'Team:', gameState.makerTeam, 'Alone:', goingAlone);
+    debugLog('Trump made by player:', gameState.makerIndex, 'Team:', gameState.makerTeam, 'Alone:', goingAlone);
 
     // If going alone, show special message
     if (goingAlone) {
@@ -719,7 +782,7 @@ function orderUp(suit, goingAlone = false) {
         // Set partner index based on maker
         const partnerIndex = getPartnerIndex(gameState.makerIndex);
         gameState.partnerSittingOut = partnerIndex;
-        console.log('Partner sitting out:', partnerIndex);
+        debugLog('Partner sitting out:', partnerIndex);
 
         // Hide the partner's hand
         updatePartnerHandVisibility();
@@ -732,7 +795,7 @@ function orderUp(suit, goingAlone = false) {
         // Round 1: Dealer picks up the trump candidate card and must discard
         const topCard = gameState.deck.pop();
         if (gameState.dealer === 0) {
-            console.log('Player hand before trump pickup:', gameState.playerHand.length);
+            debugLog('Player hand before trump pickup:', gameState.playerHand.length);
             // Mark the trump card for visual distinction
             topCard.isTrumpPickup = true;
 
@@ -752,7 +815,7 @@ function orderUp(suit, goingAlone = false) {
                 const discardIndex = gameState.playerHand.indexOf(cardToDiscard);
                 gameState.playerHand.splice(discardIndex, 1);
 
-                console.log('Player hand after auto-discard:', gameState.playerHand.length);
+                debugLog('Player hand after auto-discard:', gameState.playerHand.length);
                 renderPlayerHand();
 
                 messageEl.textContent = 'You are sitting out this hand. Your partner is going alone!';
@@ -763,7 +826,7 @@ function orderUp(suit, goingAlone = false) {
                 }, 1500);
             } else {
                 gameState.playerHand.push(topCard);
-                console.log('Player hand after trump pickup:', gameState.playerHand.length);
+                debugLog('Player hand after trump pickup:', gameState.playerHand.length);
 
                 // DON'T re-render the hand — existing cards are already positioned correctly.
                 // Just append the trump pickup card directly as an offset floating card,
@@ -784,6 +847,8 @@ function orderUp(suit, goingAlone = false) {
                     trumpEl.style.transform = baseT;
                 });
                 playerHandEl.appendChild(trumpEl);
+                // Settle it into the fan's 6th-card slot on the next tick (so it transitions in)
+                setTimeout(updateSouthHandFan, 10);
 
                 // Player dealer needs to discard
                 gameState.gamePhase = 'discarding';
@@ -933,10 +998,10 @@ function animateComputerTrumpPickupAndDiscard(dealerIndex, topCard, onComplete) 
 
 // Computer dealer discards a card
 function computerDiscard() {
-    console.log('computerDiscard called - dealer:', gameState.dealer);
+    debugLog('computerDiscard called - dealer:', gameState.dealer);
     const dealerHand = gameState.computerHands[gameState.dealer - 1];
-    console.log('Dealer hand size:', dealerHand ? dealerHand.length : 'undefined');
-    console.log('Dealer hand:', dealerHand);
+    debugLog('Dealer hand size:', dealerHand ? dealerHand.length : 'undefined');
+    debugLog('Dealer hand:', dealerHand);
 
     if (!dealerHand || dealerHand.length === 0) {
         console.error('Dealer hand is empty or undefined!');
@@ -1036,19 +1101,15 @@ function computerDiscard() {
     finishDiscardPhase();
 }
 
-// Helper function to get card value for comparison
-function getCardValue(card) {
-    const values = { '9': 1, '10': 2, 'J': 3, 'Q': 4, 'K': 5, 'A': 6 };
-    return values[card.value] || 0;
-}
-
 // Enable card selection for discarding
 function enableCardSelectionForDiscard() {
     const playerCards = playerHandEl.querySelectorAll('.card');
     playerCards.forEach(card => {
         card.style.cursor = 'pointer';
         card.addEventListener('click', handleDiscardClick);
+        makeCardSelectable(card, true, 'discard');
     });
+    focusFirstSelectableCard();
 }
 
 // Handle discard card click
@@ -1090,6 +1151,7 @@ function disableCardSelectionForDiscard() {
     playerCards.forEach(card => {
         card.style.cursor = 'default';
         card.removeEventListener('click', handleDiscardClick);
+        makeCardUnselectable(card);
     });
 }
 
@@ -1141,7 +1203,7 @@ function finishDiscardPhase() {
 function pass() {
     gameState.isProcessingTurn = false; // Release turn lock
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
-    console.log(playerNames[gameState.currentPlayer] + ' passes');
+    debugLog(playerNames[gameState.currentPlayer] + ' passes');
 
     // Check if this is an illegal pass (Stick the Dealer)
     if (gameState.settings.stickTheDealer && gameState.biddingRound === 2 &&
@@ -1165,7 +1227,7 @@ function pass() {
     const nextPlayerClockwise = [1, 2, 3, 0]; // Next player for each current player index
     const previousPlayer = gameState.currentPlayer;
     gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
-    console.log('Turn progression:', playerNames[previousPlayer], '→', playerNames[gameState.currentPlayer]);
+    debugLog('Turn progression:', playerNames[previousPlayer], '→', playerNames[gameState.currentPlayer]);
 
     // Check if we've gone through all players in this round
     if (gameState.passedPlayers.length === 4) {
@@ -1198,7 +1260,7 @@ function pass() {
     }
 
     // Continue bidding with next player
-    console.log('Continuing bidding after pass...');
+    debugLog('Continuing bidding after pass...');
     setTimeout(startBidding, 1200); // Slowed from 1000 to 1200
 }
 
@@ -1217,13 +1279,11 @@ function startTrick() {
     showTrickTallyMode();
 
     // Clear only trick cards (preserve center-deck)
-    $(trickCardsEl).find('.trick-card').fadeOut(300, function () {
-        $(this).remove();
-    });
+    trickCardsEl.querySelectorAll('.trick-card').forEach(card => fadeOut(card, 300, () => card.remove()));
 
     // Check if current player is sitting out and skip them
     if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-        console.log('Player', gameState.currentPlayer, 'is sitting out - skipping turn');
+        debugLog('Player', gameState.currentPlayer, 'is sitting out - skipping turn');
         const nextPlayerClockwise = [1, 2, 3, 0];
         gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
         // Don't increment cardsPlayed - no card was actually played
@@ -1251,13 +1311,13 @@ function startTrick() {
 function computerPlayCard() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to play while turn is already processing - skipping');
+        debugLog('AI tried to play while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI play
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to play on player turn - skipping');
+        debugLog('AI tried to play on player turn - skipping');
         return;
     }
 
@@ -1267,7 +1327,7 @@ function computerPlayCard() {
     try {
         // Check if this player is sitting out (partner going alone)
         if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-            console.log('Player', gameState.currentPlayer, 'is sitting out (partner going alone)');
+            debugLog('Player', gameState.currentPlayer, 'is sitting out (partner going alone)');
             const nextPlayerClockwise = [1, 2, 3, 0];
             gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
 
@@ -1660,7 +1720,7 @@ function playCard(card, playerIndex) {
             c.suit === card.suit && c.value === card.value
         );
         if (cardIndex !== -1) {
-            cardEl = $(playerHandEl).find(`[data-index="${cardIndex}"]`)[0];
+            cardEl = playerHandEl.querySelector(`[data-index="${cardIndex}"]`);
             gameState.playerHand.splice(cardIndex, 1);
         }
     } else {
@@ -1670,7 +1730,7 @@ function playCard(card, playerIndex) {
         );
         if (cardIndex !== -1) {
             const handEl = handElements[playerIndex];
-            cardEl = $(handEl).find('.card').eq(cardIndex)[0];
+            cardEl = handEl.querySelectorAll('.card')[cardIndex];
             hand.splice(cardIndex, 1);
         }
     }
@@ -1691,7 +1751,7 @@ function playCard(card, playerIndex) {
 
     // Skip the sitting out partner if going alone
     if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-        console.log('Skipping sitting out partner:', gameState.currentPlayer);
+        debugLog('Skipping sitting out partner:', gameState.currentPlayer);
         gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
         // Don't increment cardsPlayed - no card was actually played
     }
@@ -1733,85 +1793,11 @@ function playCard(card, playerIndex) {
     }
 }
 
-// Compare two cards to see if card1 beats card2 in Euchre
-function isCardHigher(card1, card2, trumpSuit, leadSuit) {
-    const card1IsTrump = isCardTrump(card1, trumpSuit);
-    const card2IsTrump = isCardTrump(card2, trumpSuit);
-
-    // Trump beats non-trump
-    if (card1IsTrump && !card2IsTrump) return true;
-    if (!card1IsTrump && card2IsTrump) return false;
-
-    // Both trump — compare trump values (bowers > A > K > Q > 10 > 9)
-    if (card1IsTrump && card2IsTrump) {
-        return getEuchreCardValue(card1, trumpSuit) > getEuchreCardValue(card2, trumpSuit);
-    }
-
-    // Neither is trump — lead suit beats off-suit
-    const card1EffSuit = getEffectiveSuit(card1, trumpSuit);
-    const card2EffSuit = getEffectiveSuit(card2, trumpSuit);
-    const card1IsLead = card1EffSuit === leadSuit;
-    const card2IsLead = card2EffSuit === leadSuit;
-
-    if (card1IsLead && !card2IsLead) return true;
-    if (!card1IsLead && card2IsLead) return false;
-
-    // Same category — higher value wins
-    return getEuchreCardValue(card1, trumpSuit) > getEuchreCardValue(card2, trumpSuit);
-}
-
-// Get the Euchre value of a card (higher = better)
-function getEuchreCardValue(card, trumpSuit) {
-    if (!card) return 0;
-
-    // Right bower (Jack of trump suit) - highest
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return 100;
-    }
-
-    // Left bower (Jack of same color as trump) - second highest
-    const trumpColor = (trumpSuit === 'hearts' || trumpSuit === 'diamonds') ? 'red' : 'black';
-    const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
-    if (card.value === 'J' && cardColor === trumpColor && card.suit !== trumpSuit) {
-        return 99;
-    }
-
-    // Other trump cards
-    if (card.suit === trumpSuit) {
-        const trumpValues = { 'A': 98, 'K': 97, 'Q': 96, '10': 95, '9': 94 };
-        return trumpValues[card.value] || 0;
-    }
-
-    // Non-trump cards
-    const regularValues = { 'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, '9': 9 };
-    return regularValues[card.value] || 0;
-}
-
-// Check if a card is trump (including bowers)
-function isCardTrump(card, trumpSuit) {
-    if (!card || !trumpSuit) return false;
-
-    // Right bower
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return true;
-    }
-
-    // Left bower
-    const trumpColor = (trumpSuit === 'hearts' || trumpSuit === 'diamonds') ? 'red' : 'black';
-    const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
-    if (card.value === 'J' && cardColor === trumpColor && card.suit !== trumpSuit) {
-        return true;
-    }
-
-    // Regular trump
-    return card.suit === trumpSuit;
-}
-
 // Determine the winner of the current trick
 function determineTrickWinner() {
     // GUARD: prevent double-fire (can happen with overlapping timeouts)
     if (gameState.isProcessingTrick) {
-        console.log('determineTrickWinner called while already processing - skipping');
+        debugLog('determineTrickWinner called while already processing - skipping');
         return;
     }
     gameState.isProcessingTrick = true;
@@ -1826,26 +1812,13 @@ function determineTrickWinner() {
         }
     }
 
-    let winnerIndex = 0;
-    let winningCard = gameState.currentTrick[0];
-
-    // Evaluate each card in the trick
-    for (let i = 1; i < gameState.currentTrick.length; i++) {
-        const currentCard = gameState.currentTrick[i];
-
-        if (isCardHigher(currentCard.card, winningCard.card, gameState.trumpSuit, gameState.leadSuit)) {
-            winnerIndex = i;
-            winningCard = currentCard;
-        }
-    }
-
-    // The winner index corresponds to the player who played the winning card
+    const winningCard = getTrickWinner(gameState.currentTrick, gameState.trumpSuit);
     const actualWinnerIndex = winningCard.player;
     gameState.trickWinner = actualWinnerIndex;
     gameState.currentPlayer = actualWinnerIndex;
 
     // Track tricks won this hand (not game score yet)
-    const winningTeam = (actualWinnerIndex === 0 || actualWinnerIndex === 2) ? 0 : 1;
+    const winningTeam = teamOf(actualWinnerIndex);
     if (winningTeam === 0) {
         gameState.tricksThisHand.team0++;
     } else {
@@ -1853,8 +1826,8 @@ function determineTrickWinner() {
     }
     gameState.tricksPlayed++;
 
-    console.log(`Trick ${gameState.tricksPlayed} won by team ${winningTeam}`);
-    console.log('Tricks this hand:', gameState.tricksThisHand);
+    debugLog(`Trick ${gameState.tricksPlayed} won by team ${winningTeam}`);
+    debugLog('Tricks this hand:', gameState.tricksThisHand);
 
     // Update tally marks for the winner
     updateTrickTally(actualWinnerIndex);
@@ -1943,7 +1916,7 @@ function animateTrickToWinner(winnerIndex) {
 
     // Clear only trick cards after animation (preserve center-deck)
     setTimeout(() => {
-        $(trickCardsEl).find('.trick-card').remove();
+        trickCardsEl.querySelectorAll('.trick-card').forEach(card => card.remove());
     }, 1200);
 }
 
@@ -1963,44 +1936,30 @@ function endHand() {
     gameState.gamePhase = 'hand_complete';
 
     const makerTricks = gameState.makerTeam === 0 ? gameState.tricksThisHand.team0 : gameState.tricksThisHand.team1;
-    const defenderTricks = gameState.makerTeam === 0 ? gameState.tricksThisHand.team1 : gameState.tricksThisHand.team0;
-
-    let pointsAwarded = 0;
-    let scoringTeam = null;
-    let scoringMessage = '';
 
     const teamNames = ['You and Your Teammate', 'Fucker 2 and Fucker 1'];
     const makerTeamName = teamNames[gameState.makerTeam];
     const defenderTeamName = teamNames[1 - gameState.makerTeam];
 
-    // Euchre scoring rules
-    if (makerTricks >= 3) {
-        // Makers won
-        scoringTeam = gameState.makerTeam;
-        if (makerTricks === 5) {
-            // March (all 5 tricks)
-            pointsAwarded = gameState.makerIsAlone ? 4 : 2;
-            scoringMessage = gameState.makerIsAlone ?
-                `${makerTeamName} march alone! +4 points` :
-                `${makerTeamName} march! +2 points`;
-        } else {
-            // 3 or 4 tricks
-            pointsAwarded = 1;
-            scoringMessage = `${makerTeamName} make it! +1 point`;
-        }
-    } else {
-        // Defenders won (euchre)
-        scoringTeam = 1 - gameState.makerTeam;
-        pointsAwarded = 2;
-        scoringMessage = `${defenderTeamName} euchred ${makerTeamName}! +2 points`;
-    }
+    const { scoringTeam, points: pointsAwarded, outcome } = scoreHand({
+        makerTeam: gameState.makerTeam,
+        makerTricks,
+        alone: gameState.makerIsAlone
+    });
+    const scoringMessage = {
+        loner_march: `${makerTeamName} march alone! +4 points`,
+        march: `${makerTeamName} march! +2 points`,
+        made: `${makerTeamName} make it! +1 point`,
+        euchre: `${defenderTeamName} euchred ${makerTeamName}! +2 points`
+    }[outcome];
 
     // Update game score
     gameState.score[scoringTeam] += pointsAwarded;
+    store.recordHand({ makerTeam: gameState.makerTeam, outcome });
 
-    console.log('Hand complete:', scoringMessage);
-    console.log('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
-    console.log('New score:', gameState.score);
+    debugLog('Hand complete:', scoringMessage);
+    debugLog('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
+    debugLog('New score:', gameState.score);
 
     // Immediately clear all turn indicators since the round is over
     clearTurnIndicators();
@@ -2011,7 +1970,14 @@ function endHand() {
     messageEl.textContent = scoringMessage;
     updateUI(); // Update score display
 
-    const isGameOver = gameState.score[0] >= gameState.settings.winningScore || gameState.score[1] >= gameState.settings.winningScore;
+    const isGameOver = getGameWinner(gameState.score, gameState.settings.winningScore) !== null;
+
+    // Checkpoint between hands so a reload resumes from here (saveGame ignores finished games)
+    store.saveGame({
+        score: gameState.score,
+        dealer: (gameState.dealer + 1) % 4,
+        winningScore: gameState.settings.winningScore
+    });
 
     if (scoringTeam === 1 - gameState.makerTeam) {
         // Trigger visual "Euchred" overlay, passing whether game is over
@@ -2032,7 +1998,7 @@ function endHand() {
 // End the game (someone reached the winning score)
 function endGame() {
     let winner;
-    let isPlayerWin = gameState.score[0] >= gameState.settings.winningScore;
+    const isPlayerWin = getGameWinner(gameState.score, gameState.settings.winningScore) === 0;
     if (isPlayerWin) {
         winner = 'You and Your Teammate';
     } else {
@@ -2042,7 +2008,10 @@ function endGame() {
     showMessageMode();
     messageEl.textContent = `Game Over! ${winner} win ${gameState.score[0]}-${gameState.score[1]}!`;
 
-    console.log('Game Over:', winner, 'Final score:', gameState.score);
+    debugLog('Game Over:', winner, 'Final score:', gameState.score);
+
+    store.clearGame();
+    store.recordGame(isPlayerWin);
 
     // Show the game won overlay
     showGameWonOverlay(isPlayerWin);
@@ -2070,6 +2039,7 @@ function showGameWonOverlay(isPlayerWin) {
     }
 
     overlay.innerHTML += `<button id="game-won-continue-btn" class="dialog-btn">Play again</button>`;
+    overlay.querySelector('h1').id = 'game-won-title';
 
     // Add event listener to the button
     const btn = overlay.querySelector('#game-won-continue-btn');
@@ -2081,25 +2051,7 @@ function showGameWonOverlay(isPlayerWin) {
     }
 
     overlay.classList.add('active');
-}
-
-// Helper function to get the name of a card
-function getCardName(card) {
-    if (!card) {
-        console.error('getCardName called with null card');
-        return 'Unknown Card';
-    }
-
-    // Map card values to full names
-    const valueNames = {
-        'J': 'Jack',
-        'Q': 'Queen',
-        'K': 'King',
-        'A': 'Ace'
-    };
-
-    const displayValue = valueNames[card.value] || card.value;
-    return `${displayValue} of ${card.suit}`;
+    btn?.focus({ preventScroll: true });
 }
 
 // Show the Euchred overlay effect
@@ -2140,6 +2092,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you...</p>`;
     }
 
+    overlay.querySelector('h1').id = 'euchred-title';
     const btnText = isGameOver ? 'Continue' : 'Start Next Round';
     overlay.innerHTML += `<button id="euchred-continue-btn" class="dialog-btn">${btnText}</button>`;
 
@@ -2158,83 +2111,13 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
     }
 
     overlay.classList.add('active');
-}
-
-// Helper function to check if a card is a bower
-function isBower(card, trumpSuit) {
-    if (!card || !trumpSuit) return false;
-    return (card.value === 'J' && (card.suit === trumpSuit || getSuitOfLeftBower(card) === trumpSuit));
-}
-
-// Helper function to get partner index
-function getPartnerIndex(playerIndex) {
-    // Partners are across from each other: 0-2 (You-Teammate), 1-3 (Fucker1-Fucker2)
-    switch (playerIndex) {
-        case 0: return 2; // Your partner is Teammate
-        case 1: return 3; // Fucker 1's partner is Fucker 2
-        case 2: return 0; // Teammate's partner is You
-        case 3: return 1; // Fucker 2's partner is Fucker 1
-        default: return -1;
-    }
-}
-
-// Helper function to get the suit of the left bower
-function getSuitOfLeftBower(card) {
-    if (!card || card.value !== 'J') return null;
-
-    switch (card.suit) {
-        case 'hearts': return 'diamonds';
-        case 'diamonds': return 'hearts';
-        case 'clubs': return 'spades';
-        case 'spades': return 'clubs';
-        default: return null;
-    }
-}
-
-// Helper function to get the effective suit of a card (considering trump and bowers)
-function getEffectiveSuit(card, trumpSuit) {
-    if (!card) return null;
-    if (!trumpSuit) return card.suit;
-
-    // Right bower (Jack of trump suit) is trump
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return trumpSuit;
-    }
-
-    // Left bower (Jack of same color as trump) is also trump
-    if (card.value === 'J' && getSuitOfLeftBower(card) === trumpSuit) {
-        return trumpSuit;
-    }
-
-    // All other cards are their natural suit
-    return card.suit;
-}
-
-// Helper function to check if player can play a specific card
-function canPlayCard(card, playerHand, leadSuit, trumpSuit) {
-    // If no lead suit yet, any card can be played
-    if (!leadSuit) return true;
-
-    const cardEffectiveSuit = getEffectiveSuit(card, trumpSuit);
-
-    // Check if player has any cards of the lead suit
-    const hasLeadSuit = playerHand.some(handCard =>
-        getEffectiveSuit(handCard, trumpSuit) === leadSuit
-    );
-
-    // If player has cards of the lead suit, they must play one
-    if (hasLeadSuit) {
-        return cardEffectiveSuit === leadSuit;
-    }
-
-    // If player doesn't have the lead suit, they can play any card
-    return true;
+    btn?.focus({ preventScroll: true });
 }
 
 // Show rule violation popup
 function showRulePopup(message) {
     rulePopupMessage.textContent = message;
-    $(rulePopup).fadeIn(200);
+    fadeIn(rulePopup, 200);
 
     // Reset all south hand cards to their base fan position.
     // On mobile, mouseenter fires on tap but mouseleave never fires on touchend,
@@ -2243,7 +2126,7 @@ function showRulePopup(message) {
 
     // Hide popup after 2 seconds
     setTimeout(() => {
-        $(rulePopup).fadeOut(300);
+        fadeOut(rulePopup, 300);
     }, 2000);
 }
 
@@ -2251,17 +2134,16 @@ function showRulePopup(message) {
 function showAIDecision(playerIndex, decision, suit = null) {
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
     const playerClasses = ['south-player', 'west-player', 'north-player', 'east-player'];
-    console.log('=== showAIDecision called ===');
-    console.log('Player:', playerIndex, '(' + playerNames[playerIndex] + ')');
-    console.log('Decision:', decision);
-    console.log('Suit:', suit);
-    console.log('Popup currently visible:', $(aiDecisionPopup).is(':visible'));
-    console.trace('Call stack:');
+    debugLog('=== showAIDecision called ===');
+    debugLog('Player:', playerIndex, '(' + playerNames[playerIndex] + ')');
+    debugLog('Decision:', decision);
+    debugLog('Suit:', suit);
 
     // If popup is already visible, hide it first
-    if ($(aiDecisionPopup).is(':visible')) {
-        console.log('Hiding existing popup before showing new one');
-        $(aiDecisionPopup).fadeOut(100);
+    const wasShown = isShown(aiDecisionPopup);
+    if (wasShown) {
+        debugLog('Hiding existing popup before showing new one');
+        fadeOut(aiDecisionPopup, 100);
         // Remove any existing classes
         aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
     }
@@ -2286,134 +2168,35 @@ function showAIDecision(playerIndex, decision, suit = null) {
     // Remove any existing player position classes
     const oldClasses = aiDecisionPopup.className;
     aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
-    console.log('Removed classes:', oldClasses, '→', aiDecisionPopup.className);
+    debugLog('Removed classes:', oldClasses, '→', aiDecisionPopup.className);
 
     // Add the appropriate player position class
     const newClass = playerClasses[playerIndex];
     aiDecisionPopup.classList.add(newClass);
-    console.log('Added class:', newClass, 'for player', playerIndex);
+    debugLog('Added class:', newClass, 'for player', playerIndex);
 
     aiDecisionMessage.textContent = message;
 
     // Small delay to ensure previous popup is hidden if there was one
-    const showDelay = $(aiDecisionPopup).is(':visible') ? 150 : 0;
+    const showDelay = wasShown ? 150 : 0;
     setTimeout(() => {
-        $(aiDecisionPopup).fadeIn(300);
+        fadeIn(aiDecisionPopup, 300);
     }, showDelay);
 
     // Hide popup after 2.5 seconds
     setTimeout(() => {
-        $(aiDecisionPopup).fadeOut(300, function () {
+        fadeOut(aiDecisionPopup, 300, () => {
             // Remove player position class AFTER fadeOut is complete
             aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
-            console.log('Popup hidden and classes cleared');
+            debugLog('Popup hidden and classes cleared');
         });
     }, 2500); // Increased for better readability
 }
 // --- AI STRATEGY HELPERS ---
 
-/**
- * Evaluates the strength of a hand for a potential trump suit.
- * Returns a score where higher is better.
- * Points:
- * - Right Bower: 4 points
- * - Left Bower: 4 points
- * - Ace of Trump: 3 points
- * - King of Trump: 2.5 points
- * - Queen of Trump: 2 points
- * - 10 of Trump: 1.5 points
- * - 9 of Trump: 1 point
- * - Off-suit Ace: 1 point
- * - Singleton (with trump): 1 point
- * - Void (with trump): 1.5 points
- */
-function evaluateHandStrength(hand, trumpSuit) {
-    let score = 0;
-    let hasTrump = false;
-    let trumpCount = 0;
-    let hasRightBower = false;
-    let hasLeftBower = false;
-    let suitCounts = { hearts: 0, diamonds: 0, clubs: 0, spades: 0 };
-
-    hand.forEach(card => {
-        const effectiveSuit = getEffectiveSuit(card, trumpSuit);
-        suitCounts[effectiveSuit]++;
-
-        if (effectiveSuit === trumpSuit) {
-            hasTrump = true;
-            trumpCount++;
-            // Differentiate Right vs Left bower
-            if (card.value === 'J' && card.suit === trumpSuit) {
-                score += 5; // Right bower — the best card in the game
-                hasRightBower = true;
-            } else if (card.value === 'J') {
-                score += 4.5; // Left bower — second best
-                hasLeftBower = true;
-            } else if (card.value === 'A') {
-                score += 3.5;
-            } else if (card.value === 'K') {
-                score += 2.5;
-            } else if (card.value === 'Q') {
-                score += 2;
-            } else if (card.value === '10') {
-                score += 1.5;
-            } else if (card.value === '9') {
-                score += 0.5; // 9 of trump is nearly worthless
-            }
-        } else if (card.value === 'A') {
-            score += 2; // Off-suit Ace is a likely trick winner (increased from 1)
-        } else if (card.value === 'K') {
-            score += 0.5; // Off-suit King has some value
-        }
-    });
-
-    // Bonuses for distribution (only if we have trump to make it useful)
-    if (hasTrump) {
-        Object.keys(suitCounts).forEach(suit => {
-            if (suit !== trumpSuit) {
-                if (suitCounts[suit] === 0) score += 2; // Void — very powerful (can trump in)
-                else if (suitCounts[suit] === 1) score += 1; // Singleton — can create void next trick
-            }
-        });
-    }
-
-    // Trump count bonus — having 3+ trump is very strong
-    if (trumpCount >= 3) score += 1.5;
-    if (trumpCount >= 4) score += 2;
-
-    // Both bowers is extremely strong
-    if (hasRightBower && hasLeftBower) score += 2;
-
-    return score;
-}
-
-/**
- * Returns the "Next" suit (same color) for a given suit.
- */
-function getNextSuit(suit) {
-    const nextMap = {
-        'hearts': 'diamonds',
-        'diamonds': 'hearts',
-        'clubs': 'spades',
-        'spades': 'clubs'
-    };
-    return nextMap[suit];
-}
-
-/**
- * Returns the "Cross" suits (opposite color) for a given suit.
- */
-function getCrossSuits(suit) {
-    if (suit === 'hearts' || suit === 'diamonds') {
-        return ['clubs', 'spades'];
-    } else {
-        return ['hearts', 'diamonds'];
-    }
-}
-
 // Show user turn dialog
 function showUserTurnDialog(message, dialogType = 'info') {
-    console.log('showUserTurnDialog called - Current player:', gameState.currentPlayer, 'Message:', message);
+    debugLog('showUserTurnDialog called - Current player:', gameState.currentPlayer, 'Message:', message);
 
     // Only show dialog if it's actually the user's turn
     if (gameState.currentPlayer !== 0) {
@@ -2449,9 +2232,13 @@ function showUserTurnDialog(message, dialogType = 'info') {
                 card.style.opacity = '0.3';
                 card.style.pointerEvents = 'none';
                 card.title = 'Can\'t call this suit (was turned down)';
+                card.setAttribute('aria-disabled', 'true');
+                card.tabIndex = -1;
             } else {
                 card.style.opacity = '1';
                 card.style.pointerEvents = 'auto';
+                card.removeAttribute('aria-disabled');
+                card.tabIndex = 0;
                 if (dialogType === 'suit_selection_forced') {
                     card.title = `Forced to call ${suit} (Stick the Dealer)`;
                 } else {
@@ -2471,21 +2258,28 @@ function showUserTurnDialog(message, dialogType = 'info') {
         }
     }
 
-    $(userTurnDialog).fadeIn(300);
+    fadeIn(userTurnDialog, 300);
+
+    // Keyboard users land on the first thing they can do (card turns focus their hand instead)
+    if (dialogType === 'bidding') {
+        focusIfKeyboard(dialogOrderUp);
+    } else if (dialogType === 'suit_selection' || dialogType === 'suit_selection_forced') {
+        focusIfKeyboard(suitSelection.querySelector('.suit-card[tabindex="0"]'));
+    }
 }
 
 // Hide user turn dialog
 function hideUserTurnDialog() {
     suitSelection.classList.remove('show');
     dialogActions.classList.remove('show');
-    $(userTurnDialog).fadeOut(300);
+    fadeOut(userTurnDialog, 300);
 }
 
 // Clear all turn indicators
 function clearTurnIndicators() {
     const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
     indicators.forEach(id => {
-        $('#' + id).removeClass('active');
+        document.getElementById(id)?.classList.remove('active');
     });
 }
 
@@ -2495,7 +2289,7 @@ function updateTurnIndicators() {
 
     // Add active class to current player's indicator
     const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
-    $('#' + indicators[gameState.currentPlayer]).addClass('active');
+    document.getElementById(indicators[gameState.currentPlayer])?.classList.add('active');
 }
 
 // Update trick tally marks for a player
@@ -2537,24 +2331,16 @@ function updateDealerBadges() {
 
     // Update dealer badges
     dealerBadges.forEach((id, index) => {
-        const badge = $('#' + id);
-        if (index === gameState.dealer) {
-            badge.addClass('active');
-        } else {
-            badge.removeClass('active');
-        }
+        document.getElementById(id)?.classList.toggle('active', index === gameState.dealer);
     });
 
     // Update maker badges
     makerBadges.forEach((id, index) => {
-        const badge = $('#' + id);
-        if (gameState.makerIndex !== null && index === gameState.makerIndex) {
-            badge.addClass('active');
-
-            badge.text('MAKER');
-        } else {
-            badge.removeClass('active');
-        }
+        const badge = document.getElementById(id);
+        if (!badge) return;
+        const isMaker = gameState.makerIndex !== null && index === gameState.makerIndex;
+        badge.classList.toggle('active', isMaker);
+        if (isMaker) badge.textContent = 'MAKER';
     });
 }
 
@@ -2794,17 +2580,14 @@ function createCardElement(card, index, faceDown = false) {
     cardEl.appendChild(valueElBottom);
     cardEl.appendChild(suitElBottom);
 
+    // Read as one image ("Jack of hearts, trump") rather than as its corner glyphs
+    cardEl.setAttribute('role', 'img');
+    cardEl.setAttribute('aria-label', cardAccessibleName(card));
+
     // Explicitly set base z-index to avoid stacking jumps during deal
     if (index !== undefined) {
         cardEl.style.zIndex = 10 + index;
     }
-
-    // Attempt to update the fan dynamically if playerHandEl is accessible
-    setTimeout(() => {
-        if (typeof updateSouthHandFan === 'function') {
-            updateSouthHandFan();
-        }
-    }, 10);
 
     return cardEl;
 }
@@ -2985,9 +2768,7 @@ function flipTopCardOfDeck(card) {
 // Render the trump card
 function renderTrumpCard(card) {
     if (!card) {
-        $(trumpCardEl).fadeOut(300, function () {
-            $(this).empty();
-        });
+        fadeOut(trumpCardEl, 300, () => trumpCardEl.replaceChildren());
         return;
     }
 
@@ -2996,7 +2777,7 @@ function renderTrumpCard(card) {
     trumpCardEl.appendChild(cardEl);
 
     // Animate the trump card appearance
-    $(cardEl).hide().fadeIn(500);
+    fadeIn(cardEl, 500);
 }
 
 // Animate a card from its current position to the center of the table
@@ -3131,7 +2912,7 @@ function hideTrumpCandidate() {
     if (centerDeck) {
         const trumpCandidateCard = centerDeck.querySelector('.trump-candidate-card');
         if (trumpCandidateCard) {
-            $(trumpCandidateCard).fadeOut(300, function () {
+            fadeOut(trumpCandidateCard, 300, () => {
                 trumpCandidateCard.remove();
             });
         }
@@ -3143,7 +2924,7 @@ function hideTrumpCandidate() {
 function hideDeckInCenter() {
     const centerDeck = document.getElementById('center-deck');
     if (centerDeck) {
-        $(centerDeck).fadeOut(300, function () {
+        fadeOut(centerDeck, 300, () => {
             centerDeck.remove();
         });
     }
@@ -3247,7 +3028,7 @@ function animateCardFromCenter(card, playerIndex, dealIndex) {
         }, 700);
     } else {
         // Fallback if no deck cards available
-        console.log('No deck cards available for animation');
+        debugLog('No deck cards available for animation');
     }
 }
 
@@ -3273,7 +3054,11 @@ function enableCardSelection() {
     playerCards.forEach(card => {
         card.style.cursor = 'pointer';
         card.addEventListener('click', handleCardClick);
+        const handCard = gameState.playerHand[parseInt(card.dataset.index, 10)];
+        const legal = !!handCard && canPlayCard(handCard, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit);
+        makeCardSelectable(card, legal, 'play');
     });
+    focusFirstSelectableCard();
 }
 
 // Disable card selection
@@ -3283,6 +3068,7 @@ function disableCardSelection() {
     playerCards.forEach(card => {
         card.style.cursor = 'default';
         card.removeEventListener('click', handleCardClick);
+        makeCardUnselectable(card);
     });
 }
 
@@ -3293,7 +3079,7 @@ function handleCardClick(event) {
     // GUARD: prevent double-click race condition where a second click fires before
     // the first card's animation completes and disableCardSelection() takes effect
     if (gameState.isProcessingTurn) {
-        console.log('Player clicked while turn already processing — ignoring');
+        debugLog('Player clicked while turn already processing — ignoring');
         return;
     }
 
@@ -3343,23 +3129,194 @@ function handleCardClick(event) {
     playCard(card, 0);
 }
 
+// ─── Keyboard and screen reader support ─────────────────────────────────
+
+// Auto-focus only follows keyboard users; pointer users keep their scroll position and zoom.
+let usingKeyboard = false;
+window.addEventListener('keydown', e => {
+    if (!e.metaKey && !e.ctrlKey && !e.altKey) usingKeyboard = true;
+}, true);
+window.addEventListener('pointerdown', () => { usingKeyboard = false; }, true);
+
+function focusIfKeyboard(el) {
+    if (usingKeyboard && el) el.focus({ preventScroll: true });
+}
+
+function cardAccessibleName(card) {
+    const name = getCardName(card);
+    return gameState.trumpSuit && isCardTrump(card, gameState.trumpSuit) ? `${name}, trump` : name;
+}
+
+// Turn a card in your hand into a button. Illegal plays stay reachable (so the whole
+// hand can be heard) but are marked disabled. Uses a roving tabindex: one tab stop per hand.
+function makeCardSelectable(cardEl, enabled, action) {
+    const card = gameState.playerHand[parseInt(cardEl.dataset.index, 10)];
+    if (!card) return;
+    const verb = action === 'discard' ? 'Discard' : 'Play';
+    cardEl.setAttribute('role', 'button');
+    cardEl.setAttribute('aria-disabled', String(!enabled));
+    cardEl.setAttribute('aria-label', `${verb} ${cardAccessibleName(card)}${enabled ? '' : ', must follow suit'}`);
+    cardEl.tabIndex = -1;
+}
+
+function makeCardUnselectable(cardEl) {
+    const card = gameState.playerHand[parseInt(cardEl.dataset.index, 10)];
+    cardEl.setAttribute('role', 'img');
+    cardEl.removeAttribute('aria-disabled');
+    cardEl.removeAttribute('tabindex');
+    if (card) cardEl.setAttribute('aria-label', cardAccessibleName(card));
+}
+
+function selectableHandCards() {
+    return [...playerHandEl.querySelectorAll('.card[role="button"]')];
+}
+
+function moveHandFocus(target) {
+    selectableHandCards().forEach(c => { c.tabIndex = c === target ? 0 : -1; });
+    target.focus({ preventScroll: true });
+}
+
+function focusFirstSelectableCard() {
+    const cards = selectableHandCards();
+    const target = cards.find(c => c.getAttribute('aria-disabled') !== 'true') || cards[0];
+    if (!target) return;
+    target.tabIndex = 0;
+    focusIfKeyboard(target);
+}
+
+// Arrow keys move between cards, Enter or Space plays the focused one
+playerHandEl.addEventListener('keydown', e => {
+    const cards = selectableHandCards();
+    const i = cards.indexOf(document.activeElement);
+    if (i === -1) return;
+    const moves = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: cards.length - 1 };
+    if (e.key in moves) {
+        e.preventDefault();
+        moveHandFocus(cards[(moves[e.key] + cards.length) % cards.length]);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        cards[i].click();
+    }
+});
+
+// Number keys 1-6 play or discard that card, counting from the left
+document.addEventListener('keydown', e => {
+    if (!/^[1-6]$/.test(e.key) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest('input, select, textarea, .settings-modal, .go-alone-modal-overlay')) return;
+    const card = selectableHandCards()[Number(e.key) - 1];
+    if (card) {
+        e.preventDefault();
+        card.click();
+    }
+});
+
+// Suit choices are divs styled as cards: give them button keyboard behavior
+suitSelection.addEventListener('keydown', e => {
+    const suitCard = e.target.closest('.suit-card');
+    if (!suitCard || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    if (suitCard.getAttribute('aria-disabled') !== 'true') suitCard.click();
+});
+
+// Keep Tab inside an open modal; Escape runs onEscape if given. Returns a release function.
+function trapFocus(container, onEscape) {
+    const focusable = () => [...container.querySelectorAll('button, select, input, [tabindex]:not([tabindex="-1"])')]
+        .filter(el => !el.disabled && el.getClientRects().length > 0);
+    const handler = e => {
+        if (e.key === 'Escape' && onEscape) {
+            e.preventDefault();
+            onEscape();
+            return;
+        }
+        if (e.key !== 'Tab') return;
+        const items = focusable();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    };
+    container.addEventListener('keydown', handler);
+    return () => container.removeEventListener('keydown', handler);
+}
+
+// Fill the "Your record" panel in the settings modal
+function renderStats(stats) {
+    const grid = document.getElementById('stats-grid');
+    if (!grid) return;
+    const winRate = stats.gamesPlayed ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0;
+    const rows = [
+        ['Games won', stats.gamesPlayed ? `${stats.gamesWon} of ${stats.gamesPlayed} (${winRate}%)` : 'None yet'],
+        ['Win streak', `${stats.currentStreak} (best ${stats.bestStreak})`],
+        ['You euchred them', stats.euchresDealt],
+        ['They euchred you', stats.euchresTaken],
+        ['Marches', stats.marches],
+        ['Loners marched', stats.lonersWon]
+    ];
+    grid.replaceChildren(...rows.flatMap(([label, value]) => {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.textContent = value;
+        return [dt, dd];
+    }));
+}
+
 // Event listeners
 const centerDeck = document.getElementById('center-deck');
 
-// Helper to start the game and hide setup UI
-function triggerGameStart() {
-    if (gameState.gamePhase !== 'setup') return;
-    // Hide the start game button
-    const startBtn = document.getElementById('start-game-btn');
-    if (startBtn) startBtn.classList.add('hidden');
-    startNewGame();
+const startGameBtn = document.getElementById('start-game-btn');
+const newGameBtn = document.getElementById('new-game-btn');
+
+function hideStartButtons() {
+    startGameBtn.classList.add('hidden');
+    newGameBtn.hidden = true;
 }
 
-// Start Game button click
-const startGameBtn = document.getElementById('start-game-btn');
-if (startGameBtn) {
-    startGameBtn.addEventListener('click', triggerGameStart);
+// Offer to pick up where the player left off, if there's a saved game
+function showStartButtons() {
+    const saved = store.loadGame();
+    startGameBtn.textContent = saved ? 'Resume Game' : 'Start Game';
+    newGameBtn.hidden = !saved;
+    if (saved) {
+        messageEl.textContent = `Welcome back! You ${saved.score[0]}, them ${saved.score[1]}.`;
+    }
 }
+
+// Resume from the last completed hand of a saved game
+function resumeGame(saved) {
+    gameState.gamePhase = 'dealing';
+    gameState.score = [...saved.score];
+    gameState.dealer = saved.dealer;
+    gameState.settings.winningScore = saved.winningScore;
+    updateUI();
+    messageEl.textContent = `Picking up at ${saved.score[0]}-${saved.score[1]}...`;
+    setTimeout(initGame, 1500);
+}
+
+// Primary start action: resume if there's a save, otherwise start fresh
+function triggerGameStart() {
+    if (gameState.gamePhase !== 'setup') return;
+    hideStartButtons();
+    const saved = store.loadGame();
+    if (saved) {
+        resumeGame(saved);
+    } else {
+        startNewGame();
+    }
+}
+
+startGameBtn.addEventListener('click', triggerGameStart);
+newGameBtn.addEventListener('click', () => {
+    if (gameState.gamePhase !== 'setup') return;
+    hideStartButtons();
+    startNewGame();
+});
 
 // Deck click kept as fallback (clickable class is removed after start)
 centerDeck.addEventListener('click', function () {
@@ -3413,6 +3370,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Set game phase to setup so deck click works
     gameState.gamePhase = 'setup';
 
+    // Restore remembered settings and offer to resume a saved game
+    gameState.settings = store.loadSettings();
+    document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
+    showStartButtons();
+
     // Fast-Forward Easter Egg Logic
     const gameContainer = document.querySelector('.game-container');
     if (gameContainer) {
@@ -3442,8 +3404,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 gameState.fastForward = true;
                 document.body.classList.add('fast-forward');
                 const glitchVideo = document.getElementById('glitch-overlay');
-                if (glitchVideo) glitchVideo.play().catch(e => console.log('Video autoplay prevented', e));
-                console.log("Fast-forward enabled");
+                if (glitchVideo) glitchVideo.play().catch(e => debugLog('Video autoplay prevented', e));
+                debugLog("Fast-forward enabled");
             }, 200);
         };
 
@@ -3457,7 +3419,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.remove('fast-forward');
                 const glitchVideo = document.getElementById('glitch-overlay');
                 if (glitchVideo) glitchVideo.pause();
-                console.log("Fast-forward disabled");
+                debugLog("Fast-forward disabled");
             }
         };
 
@@ -3481,8 +3443,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnGoAloneConfirm = document.getElementById('btn-go-alone-confirm');
     let pendingTrumpSuit = null;
 
+    let releaseGoAloneTrap = null;
+
     const hideGoAloneModal = () => {
         if (!goAloneModal) return;
+        releaseGoAloneTrap?.();
+        releaseGoAloneTrap = null;
         goAloneModal.style.opacity = '0';
         goAloneModal.style.transform = 'scale(0.95)';
         setTimeout(() => {
@@ -3500,6 +3466,8 @@ window.addEventListener('DOMContentLoaded', () => {
         void goAloneModal.offsetWidth;
         goAloneModal.style.opacity = '1';
         goAloneModal.style.transform = 'scale(1)';
+        releaseGoAloneTrap = trapFocus(goAloneModal);
+        btnPlayTeammate?.focus({ preventScroll: true });
     };
 
     // Suit card click handlers
@@ -3564,6 +3532,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (settingsBtn && settingsModal && closeSettingsBtn) {
+        let releaseSettingsTrap = null;
+
+        const closeSettingsModal = () => {
+            settingsModal.style.display = 'none';
+            settingsModal.classList.remove('active');
+            releaseSettingsTrap?.();
+            releaseSettingsTrap = null;
+            settingsBtn.focus({ preventScroll: true });
+        };
+
         settingsBtn.addEventListener('click', () => {
             if (window.cancelFastForward) window.cancelFastForward();
             // Apply current settings
@@ -3575,7 +3553,12 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             const settingBeginnerMode = document.getElementById('setting-beginner-mode');
             if (settingBeginnerMode) settingBeginnerMode.checked = gameState.settings.beginnerMode;
+            renderStats(store.loadStats());
             settingsModal.style.display = 'block';
+            settingsModal.classList.add('active');
+            // Escape closes without saving, same as the X button
+            releaseSettingsTrap = trapFocus(settingsModal, closeSettingsModal);
+            settingWinningScore.focus({ preventScroll: true });
         });
 
         closeSettingsBtn.addEventListener('click', () => {
@@ -3588,15 +3571,35 @@ window.addEventListener('DOMContentLoaded', () => {
                 gameState.settings.beginnerMode = settingBeginnerMode.checked;
                 document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
             }
-            settingsModal.style.display = 'none';
+            store.saveSettings(gameState.settings);
+            closeSettingsModal();
         });
+
+        // Reset record: two-step so a stray tap can't wipe it
+        const resetStatsBtn = document.getElementById('reset-stats-btn');
+        if (resetStatsBtn) {
+            let confirmTimer = null;
+            resetStatsBtn.addEventListener('click', () => {
+                if (resetStatsBtn.dataset.confirm !== 'true') {
+                    resetStatsBtn.dataset.confirm = 'true';
+                    resetStatsBtn.textContent = 'Tap again to reset';
+                    confirmTimer = originalSetTimeout(() => {
+                        resetStatsBtn.dataset.confirm = 'false';
+                        resetStatsBtn.textContent = 'Reset record';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(confirmTimer);
+                resetStatsBtn.dataset.confirm = 'false';
+                resetStatsBtn.textContent = 'Reset record';
+                renderStats(store.resetStats());
+            });
+        }
 
         // X button — closes without saving
         const modalCloseXBtn = document.getElementById('modal-close-x-btn');
         if (modalCloseXBtn) {
-            modalCloseXBtn.addEventListener('click', () => {
-                settingsModal.style.display = 'none';
-            });
+            modalCloseXBtn.addEventListener('click', closeSettingsModal);
         }
     }
 });

@@ -1,0 +1,12 @@
+{
+  "name": "euchre",
+  "private": true,
+  "description": "A (slightly spicy) Euchre game in vanilla HTML, CSS and JavaScript.",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check rules.js && node --check storage.js && node --check game.js && node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

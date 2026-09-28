@@ -10,13 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
 <body>
     <!-- Fast-forward visual effect overlay -->
-    <video id="glitch-overlay" class="glitch-overlay" src="glitch.mp4" loop muted playsinline></video>
+    <video id="glitch-overlay" class="glitch-overlay" src="glitch.mp4" preload="none" loop muted playsinline aria-hidden="true"></video>
 
     <!-- Full width header -->
     <header class="game-header">
@@ -25,7 +23,8 @@
                 <h1>Euchre</h1>
             </a>
             <div class="game-message-container">
-                <div id="message">Welcome to Euchre!</div>
+                <div id="message" role="status" aria-live="polite" aria-atomic="true">Welcome to Euchre!</div>
+                <span id="trump-status" class="sr-only" role="status"></span>
             </div>
             <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
                 <div class="game-info">
@@ -34,7 +33,7 @@
                             <div class="team-label-group">
                                 <div class="team-label responsive-label" data-full="Your Team" data-short="You">Your
                                     Team</div>
-                                <div class="team-tally-crowns" id="team1-tally-crowns">
+                                <div class="team-tally-crowns" id="team1-tally-crowns" role="img" aria-label="0 tricks this hand">
                                     <svg class="tally-crown" viewBox="0 0 256 256">
                                         <path
                                             d="M221.36,93.36a12,12,0,0,0-15-2.28L174.67,112,137.6,61.43a12,12,0,0,0-19.2,0L81.33,112,49.63,91.08a12,12,0,0,0-15,19.56l36.31,48.4a12,12,0,0,0,9.6,4.8H175.46a12,12,0,0,0,9.6-4.8l36.31-48.4A12,12,0,0,0,221.36,93.36ZM224,192H32a12,12,0,0,0,0,24H224a12,12,0,0,0,0-24Z">
@@ -63,14 +62,14 @@
                                 </div>
                             </div>
                             <div class="flipboard-score">
-                                <span id="team1-score" class="score-digit">0</span>
+                                <span class="sr-only">Your team score:</span><span id="team1-score" class="score-digit">0</span>
                             </div>
                         </div>
                         <div class="team-score-section">
                             <div class="team-label-group">
                                 <div class="team-label responsive-label" data-full="Opponents" data-short="Them">
                                     Opponents</div>
-                                <div class="team-tally-crowns" id="team2-tally-crowns">
+                                <div class="team-tally-crowns" id="team2-tally-crowns" role="img" aria-label="0 tricks this hand">
                                     <svg class="tally-crown" viewBox="0 0 256 256">
                                         <path
                                             d="M221.36,93.36a12,12,0,0,0-15-2.28L174.67,112,137.6,61.43a12,12,0,0,0-19.2,0L81.33,112,49.63,91.08a12,12,0,0,0-15,19.56l36.31,48.4a12,12,0,0,0,9.6,4.8H175.46a12,12,0,0,0,9.6-4.8l36.31-48.4A12,12,0,0,0,221.36,93.36ZM224,192H32a12,12,0,0,0,0,24H224a12,12,0,0,0,0-24Z">
@@ -99,14 +98,14 @@
                                 </div>
                             </div>
                             <div class="flipboard-score">
-                                <span id="team2-score" class="score-digit">0</span>
+                                <span class="sr-only">Opponents score:</span><span id="team2-score" class="score-digit">0</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button id="settings-btn" class="settings-btn" title="Game Settings"
+                <button id="settings-btn" class="settings-btn" title="Game Settings" aria-label="Game settings"
                     style="pointer-events: auto; z-index: 100; display: inline-flex; align-items: center; justify-content: center;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 256 256" fill="#AB8476" class="settings-icon-svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 256 256" fill="#AB8476" class="settings-icon-svg" aria-hidden="true" focusable="false">
                         <path class="gear-outline"
                             d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z" />
                         <path class="gear-fill" style="display: none;"
@@ -186,10 +185,11 @@
 
                 <!-- Start Game button — visible during setup only -->
                 <button id="start-game-btn" class="start-game-btn">Start Game</button>
+                <button id="new-game-btn" class="new-game-btn" hidden>or start a new game</button>
             </div>
 
             <!-- Trump Suit Icons in Corners -->
-            <div class="trump-corner-icons" id="trump-corner-icons" style="display: none;">
+            <div class="trump-corner-icons" id="trump-corner-icons" style="display: none;" aria-hidden="true">
                 <div class="trump-icon top-left" id="trump-icon-tl"></div>
                 <div class="trump-icon top-right" id="trump-icon-tr"></div>
                 <div class="trump-icon bottom-left" id="trump-icon-bl"></div>
@@ -205,19 +205,20 @@
                             id="south-maker">MAKER</span></div>
                     <div class="turn-indicator" id="south-indicator"></div>
                 </div>
-                <div class="hand" id="player-hand"></div>
+                <div class="hand" id="player-hand" role="group" aria-label="Your hand" aria-describedby="hand-help"></div>
+                <p id="hand-help" class="sr-only">On your turn, use the arrow keys to pick a card and Enter to play it, or press 1 to 6.</p>
                 <div class="tricks-won" id="south-tricks"></div>
             </div>
 
             <!-- AI Decision Message -->
-            <div class="ai-decision-popup" id="ai-decision-popup">
+            <div class="ai-decision-popup" id="ai-decision-popup" role="status" aria-live="polite">
                 <div class="ai-decision-content">
                     <span id="ai-decision-message">East passes</span>
                 </div>
             </div>
 
             <!-- User Turn Dialog -->
-            <div class="user-turn-dialog" id="user-turn-dialog">
+            <div class="user-turn-dialog" id="user-turn-dialog" role="group" aria-labelledby="user-turn-title" aria-describedby="user-turn-message">
                 <div class="user-turn-content">
                     <div class="dialog-text">
                         <span id="user-turn-title">Your turn!</span>
@@ -233,21 +234,21 @@
 
                     <!-- Suit Selection Cards (hidden by default) -->
                     <div class="suit-selection" id="suit-selection">
-                        <div class="suit-card" data-suit="hearts">
-                            <div class="suit-symbol"><img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" /></div>
-                            <div class="suit-name">Hearts</div>
+                        <div class="suit-card" data-suit="hearts" role="button" tabindex="0" aria-label="Call hearts trump">
+                            <div class="suit-symbol"><img src="img/suitHeart.svg" class="suit-icon" alt="" /></div>
+                            <div class="suit-name" aria-hidden="true">Hearts</div>
                         </div>
-                        <div class="suit-card" data-suit="diamonds">
-                            <div class="suit-symbol"><img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" /></div>
-                            <div class="suit-name">Diamonds</div>
+                        <div class="suit-card" data-suit="diamonds" role="button" tabindex="0" aria-label="Call diamonds trump">
+                            <div class="suit-symbol"><img src="img/suitDiamond.svg" class="suit-icon" alt="" /></div>
+                            <div class="suit-name" aria-hidden="true">Diamonds</div>
                         </div>
-                        <div class="suit-card" data-suit="clubs">
-                            <div class="suit-symbol"><img src="img/suitClub.svg" class="suit-icon" alt="Clubs" /></div>
-                            <div class="suit-name">Clubs</div>
+                        <div class="suit-card" data-suit="clubs" role="button" tabindex="0" aria-label="Call clubs trump">
+                            <div class="suit-symbol"><img src="img/suitClub.svg" class="suit-icon" alt="" /></div>
+                            <div class="suit-name" aria-hidden="true">Clubs</div>
                         </div>
-                        <div class="suit-card" data-suit="spades">
-                            <div class="suit-symbol"><img src="img/suitSpade.svg" class="suit-icon" alt="Spades" /></div>
-                            <div class="suit-name">Spades</div>
+                        <div class="suit-card" data-suit="spades" role="button" tabindex="0" aria-label="Call spades trump">
+                            <div class="suit-symbol"><img src="img/suitSpade.svg" class="suit-icon" alt="" /></div>
+                            <div class="suit-name" aria-hidden="true">Spades</div>
                         </div>
                         <button class="dialog-btn pass-btn" id="suit-pass-btn">Pass</button>
                     </div>
@@ -255,12 +256,12 @@
     </div>
 
     <!-- Settings Modal -->
-    <div class="settings-modal" id="settings-modal" style="display: none;">
+    <div class="settings-modal" id="settings-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <button class="modal-close-btn" id="modal-close-x-btn" aria-label="Close settings">
-            <i class="ph ph-x"></i>
+            <svg class="modal-close-icon" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
         </button>
         <div class="modal-content">
-            <h2>Game Settings</h2>
+            <h2 id="settings-title">Game Settings</h2>
 
             <div class="setting-group">
                 <label for="setting-winning-score">Winning Score:</label>
@@ -302,6 +303,12 @@
                 <p id="difficulty-description" class="setting-description">Adjusts how the AI bids and plays cards.</p>
             </div>
 
+            <section class="stats-section" aria-labelledby="stats-heading">
+                <h3 id="stats-heading">Your record</h3>
+                <dl class="stats-grid" id="stats-grid"></dl>
+                <button type="button" id="reset-stats-btn" class="text-btn">Reset record</button>
+            </section>
+
             <button id="close-settings-btn" style="margin-top: 20px; width: 100%;">Save
                 & Close</button>
         </div>
@@ -309,9 +316,9 @@
 
     <!-- Go Alone Confirmation Modal -->
     <div class="go-alone-modal-overlay" id="go-alone-modal">
-        <div class="go-alone-modal-content">
-            <h2 class="go-alone-title">Feeling brave?</h2>
-            <p class="go-alone-desc">Go alone for more points or keep playing with your teammate.</p>
+        <div class="go-alone-modal-content" role="dialog" aria-modal="true" aria-labelledby="go-alone-title" aria-describedby="go-alone-desc">
+            <h2 class="go-alone-title" id="go-alone-title">Feeling brave?</h2>
+            <p class="go-alone-desc" id="go-alone-desc">Go alone for more points or keep playing with your teammate.</p>
             <div class="go-alone-actions">
                 <button class="go-alone-btn play-teammate-btn" id="btn-play-teammate">Play with teammate</button>
                 <button class="go-alone-btn go-alone-confirm-btn" id="btn-go-alone-confirm">Go alone</button>
@@ -320,18 +327,20 @@
     </div>
 
     <!-- Rule Violation Popup -->
-    <div class="rule-popup" id="rule-popup">
+    <div class="rule-popup" id="rule-popup" role="alert">
         <div class="rule-popup-content">
             <span id="rule-popup-message">You must follow suit!</span>
         </div>
     </div>
 
     <!-- Euchred Overlay -->
-    <div id="euchred-overlay" class="euchred-overlay"></div>
+    <div id="euchred-overlay" class="euchred-overlay" role="dialog" aria-modal="true" aria-labelledby="euchred-title"></div>
 
     <!-- Game Won Overlay -->
-    <div id="game-won-overlay" class="game-won-overlay"></div>
+    <div id="game-won-overlay" class="game-won-overlay" role="dialog" aria-modal="true" aria-labelledby="game-won-title"></div>
 
+    <script src="rules.js"></script>
+    <script src="storage.js"></script>
     <script src="game.js"></script>
 </body>
 
