@@ -2395,7 +2395,8 @@ body.beginner-mode .card.is-trump:hover {
     padding: 1.4rem 2rem 2rem 2rem;
     border-radius: 16px;
     z-index: 30000;
-    box-shadow: 0 8px 32px var(--color-shadow-40);
+    /* Second shadow is a full-screen scrim so the table recedes behind the dialog */
+    box-shadow: 0 8px 32px var(--color-shadow-40), 0 0 0 100vmax var(--color-bg-dark-alpha-65);
     color: var(--color-bg-dark);
     width: 360px;
     text-align: center;
@@ -3033,5 +3034,23 @@ input:focus-visible + .slider,
     .game-won-gif {
         max-height: 40vh;
         margin: 8px 0;
+    }
+}
+
+/* ═══ Ultrawide screens ═══════════════════════════════════════════════════
+   Past ~17:9 the side players drifted to the far edges, a long way from the
+   cards in the middle. Cap the table at a 16:9-ish width and let the side
+   fans show in full instead of being cut off mid-screen. */
+@media (min-aspect-ratio: 17/9) and (min-height: 600px) {
+    .game-board {
+        max-width: 170vh;
+        margin-inline: auto;
+        overflow-x: visible;
+        overflow-y: clip;
+    }
+
+    .player-position.west .player-info,
+    .player-position.east .player-info {
+        border-radius: 4px;
     }
 }
