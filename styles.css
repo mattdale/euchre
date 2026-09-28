@@ -1668,19 +1668,18 @@ body.beginner-mode .card.is-trump:hover {
     color: var(--color-text-dark);
 }
 
-/* Trump pickup card styling */
+/* Trump pickup card styling. Its placement beside the fan is set inline by
+   updateSouthHandFan(); hover lifts it with `translate` so it never fights
+   that inline transform. */
 .card.trump-pickup {
     border: 3px solid var(--color-yellow);
     box-shadow: 0 0 15px var(--color-yellow-alpha-60);
-    position: absolute !important;
-    left: 100%;
-    margin-left: 6rem;
-    transform: rotate(15deg) translateY(-1rem);
     z-index: 100;
+    transition: translate 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card.trump-pickup:hover {
-    transform: rotate(15deg) translateY(-2rem) scale(1.05) !important;
+    translate: 0 -0.75rem;
     box-shadow: 0 0 20px var(--color-yellow-alpha-80);
 }
 
@@ -2396,7 +2395,8 @@ body.beginner-mode .card.is-trump:hover {
     padding: 1.4rem 2rem 2rem 2rem;
     border-radius: 16px;
     z-index: 30000;
-    box-shadow: 0 8px 32px var(--color-shadow-40);
+    /* Second shadow is a full-screen scrim so the table recedes behind the dialog */
+    box-shadow: 0 8px 32px var(--color-shadow-40), 0 0 0 100vmax var(--color-bg-dark-alpha-65);
     color: var(--color-bg-dark);
     width: 360px;
     text-align: center;
@@ -2848,5 +2848,209 @@ input:focus-visible + .slider,
 
     .glitch-overlay {
         display: none !important;
+    }
+}
+
+/* ═══ Landscape phones — short viewports ═══════════════════════════════════
+   At ~390px tall the desktop card sizes (scaled 1.4×) left no room for the
+   centre: the trump candidate hid behind your hand and the turn dialog sat
+   on top of your teammate. Shrink cards, drop the 1.4× hand scale, and keep
+   the dialog on one line just above your hand. */
+@media (max-height: 500px) and (orientation: landscape) {
+    .game-header {
+        height: 3rem;
+    }
+
+    h1 {
+        font-size: 1.4rem;
+    }
+
+    .flipboard-score {
+        width: 1.9rem;
+        height: 2.1rem;
+    }
+
+    .score-digit {
+        font-size: 1.2rem;
+    }
+
+    .card {
+        width: 4.2rem;
+        height: 5.9rem;
+        margin-left: -2.1rem;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.3rem;
+        border-radius: 6px;
+    }
+
+    .card-value,
+    .card-value-bottom,
+    .card-suit {
+        font-size: 0.9rem;
+    }
+
+    .card-suit-bottom {
+        bottom: 1.3rem;
+    }
+
+    .hand,
+    .hand.vertical {
+        height: 7rem;
+    }
+
+    /* Picked-up trump card sits closer to the smaller fan (read by game.js) */
+    #player-hand {
+        --pickup-x: 5.5rem;
+    }
+
+    .player-position.north .hand,
+    .player-position.south .hand,
+    .player-position.west .hand,
+    .player-position.east .hand {
+        scale: 1;
+    }
+
+    .player-position.north .hand {
+        margin-top: -2.75rem;
+    }
+
+    .player-position.south .hand {
+        margin-bottom: -1.5rem;
+    }
+
+    .player-position.west .hand {
+        left: calc(-3.5rem - 10px);
+        top: calc(50% - 3.5rem);
+    }
+
+    .player-position.east .hand {
+        right: calc(-3.5rem - 10px);
+        top: calc(50% - 3.5rem);
+    }
+
+    .player-info,
+    .player-position.north .player-info,
+    .player-position.south .player-info,
+    .player-position.west .player-info,
+    .player-position.east .player-info {
+        padding: 4px 10px;
+    }
+
+    .player-name {
+        font-size: 0.85rem;
+    }
+
+    /* Nudge the centre up so the dialog fits between it and your hand */
+    .play-area {
+        padding-bottom: 2.5rem;
+    }
+
+    .trick-cards {
+        height: 8rem;
+    }
+
+    .center-deck {
+        transform: scale(1);
+    }
+
+    .trick-card {
+        scale: 1;
+    }
+
+    .trick-card.play-order-1 { transform: translateX(-4.5rem) !important; }
+    .trick-card.play-order-2 { transform: translateX(-1.5rem) !important; }
+    .trick-card.play-order-3 { transform: translateX(1.5rem) !important; }
+    .trick-card.play-order-4 { transform: translateX(4.5rem) !important; }
+
+    .trump-candidate-card::before {
+        top: -26px;
+    }
+
+    .trump-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.4rem;
+    }
+
+    .user-turn-dialog {
+        bottom: 5.25rem;
+        width: max-content;
+    }
+
+    .user-turn-content {
+        flex-direction: row;
+        white-space: nowrap;
+        padding: 6px 10px;
+        gap: 10px;
+        max-width: calc(100vw - 2rem);
+        word-break: normal;
+    }
+
+    .dialog-text {
+        flex-flow: row;
+        align-items: baseline;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .dialog-text span:first-child {
+        font-size: 0.95rem;
+    }
+
+    #user-turn-message {
+        white-space: nowrap;
+    }
+
+    .dialog-actions.show {
+        width: auto;
+    }
+
+    .dialog-btn {
+        padding: 6px 10px;
+    }
+
+    .suit-card {
+        width: 44px;
+        padding: 4px 0 0;
+    }
+
+    .suit-name {
+        display: none;
+    }
+
+    .start-game-btn {
+        font-size: 1.2rem;
+        width: 180px;
+        height: 48px;
+    }
+
+    .euchred-overlay.team-you h1,
+    .euchred-overlay.team-opponent h1,
+    .game-won-overlay h1 {
+        font-size: 3rem;
+    }
+
+    .euchred-gif,
+    .game-won-gif {
+        max-height: 40vh;
+        margin: 8px 0;
+    }
+}
+
+/* ═══ Ultrawide screens ═══════════════════════════════════════════════════
+   Past ~17:9 the side players drifted to the far edges, a long way from the
+   cards in the middle. Cap the table at a 16:9-ish width and let the side
+   fans show in full instead of being cut off mid-screen. */
+@media (min-aspect-ratio: 17/9) and (min-height: 600px) {
+    .game-board {
+        max-width: 170vh;
+        margin-inline: auto;
+        overflow-x: visible;
+        overflow-y: clip;
+    }
+
+    .player-position.west .player-info,
+    .player-position.east .player-info {
+        border-radius: 4px;
     }
 }
