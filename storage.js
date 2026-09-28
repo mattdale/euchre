@@ -1,5 +1,6 @@
 /**
- * Persistence for settings, the game in progress and lifetime stats.
+ * Persistence for settings, the game in progress, lifetime stats and
+ * "How to Play" lesson progress.
  *
  * Everything goes through `createStore(storage)`, where `storage` is anything
  * with getItem/setItem/removeItem (localStorage in the browser, a Map-backed
@@ -24,7 +25,8 @@
     const KEYS = Object.freeze({
         settings: PREFIX + 'settings',
         game: PREFIX + 'game',
-        stats: PREFIX + 'stats'
+        stats: PREFIX + 'stats',
+        tutorial: PREFIX + 'tutorial'
     });
 
     const WINNING_SCORES = Object.freeze([10, 11, 15]);
@@ -80,6 +82,13 @@
         const out = {};
         for (const key of Object.keys(DEFAULT_STATS)) out[key] = isInt(s[key]) ? s[key] : DEFAULT_STATS[key];
         return out;
+    }
+
+    /** Lesson progress: the ids of finished tutorial levels, deduplicated. */
+    function sanitizeTutorial(raw) {
+        const ids = raw && Array.isArray(raw.completed) ? raw.completed : [];
+        const completed = [...new Set(ids.filter(id => typeof id === 'string' && /^[a-z0-9-]{1,32}$/.test(id)))];
+        return { completed: completed.slice(0, 50) };
     }
 
     // ─── Stat updates (pure) ─────────────────────────────────────────────
@@ -183,6 +192,14 @@
             resetStats: () => {
                 remove(KEYS.stats);
                 return { ...DEFAULT_STATS };
+            },
+
+            loadTutorial: () => sanitizeTutorial(read(KEYS.tutorial)),
+            completeTutorialLevel: id => {
+                const current = sanitizeTutorial(read(KEYS.tutorial));
+                const next = sanitizeTutorial({ completed: [...current.completed, id] });
+                write(KEYS.tutorial, next);
+                return next;
             }
         });
     }
@@ -194,6 +211,7 @@
         sanitizeSettings,
         sanitizeSavedGame,
         sanitizeStats,
+        sanitizeTutorial,
         recordHand,
         recordGame,
         createStore

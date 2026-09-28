@@ -186,6 +186,10 @@
                 <!-- Start Game button — visible during setup only -->
                 <button id="start-game-btn" class="start-game-btn">Start Game</button>
                 <button id="new-game-btn" class="new-game-btn" hidden>or start a new game</button>
+                <button id="how-to-play-btn" class="how-to-play-btn" type="button" aria-haspopup="dialog">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3.3 2 8.7 2 12 0v-5"/></svg>
+                    How to Play
+                </button>
             </div>
 
             <!-- Trump Suit Icons in Corners -->
@@ -341,9 +345,76 @@
     <!-- Game Won Overlay -->
     <div id="game-won-overlay" class="game-won-overlay" role="dialog" aria-modal="true" aria-labelledby="game-won-title"></div>
 
+    <!-- How to Play: lesson picker and the coached practice table (built by tutorial.js) -->
+    <div id="tutorial" class="tutorial" role="dialog" aria-modal="true" aria-labelledby="tut-title" hidden>
+        <header class="tut-bar">
+            <button type="button" class="tut-icon-btn" id="tut-back-to-levels" aria-label="All lessons" hidden>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <div class="tut-bar-title">
+                <span class="tut-eyebrow" id="tut-eyebrow" hidden></span>
+                <h2 id="tut-title">How to Play</h2>
+            </div>
+            <button type="button" class="tut-icon-btn" id="tut-close" aria-label="Close How to Play">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+            <div class="tut-progress" id="tut-progress" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+                <div class="tut-progress-fill" id="tut-progress-fill"></div>
+            </div>
+        </header>
+
+        <section class="tut-levels" id="tut-levels" aria-labelledby="tut-title">
+            <div class="tut-levels-inner">
+                <p class="tut-levels-intro">Five quick lessons with a practice table, from &ldquo;what&rsquo;s a trick?&rdquo; to going alone. Start at the top or jump in anywhere.</p>
+                <p class="tut-levels-summary" id="tut-levels-summary"></p>
+                <ol class="tut-level-list" id="tut-level-list"></ol>
+            </div>
+        </section>
+
+        <section class="tut-lesson" id="tut-lesson" hidden>
+            <div class="tut-table" id="tut-table">
+                <div class="tut-trump" id="tut-trump" hidden></div>
+                <div class="tut-seat" data-seat="north"><div class="tut-seat-label">Partner</div><div class="tut-mini-hand"></div></div>
+                <div class="tut-seat" data-seat="west"><div class="tut-seat-label">West</div><div class="tut-mini-hand"></div></div>
+                <div class="tut-seat" data-seat="east"><div class="tut-seat-label">East</div><div class="tut-mini-hand"></div></div>
+                <div class="tut-center" id="tut-center">
+                    <div class="tut-trick" id="tut-trick">
+                        <div class="tut-slot" data-seat="north"></div>
+                        <div class="tut-slot" data-seat="west"></div>
+                        <div class="tut-slot" data-seat="east"></div>
+                        <div class="tut-slot" data-seat="south"></div>
+                        <div class="tut-kitty" id="tut-kitty"></div>
+                    </div>
+                    <div class="tut-showcase" id="tut-showcase" hidden></div>
+                </div>
+                <div class="tut-seat tut-seat-you" data-seat="south">
+                    <div class="tut-hand" id="tut-hand" role="group" aria-label="Your hand"></div>
+                    <div class="tut-seat-label">You</div>
+                </div>
+            </div>
+
+            <div class="tut-coach">
+                <div class="tut-avatar" aria-hidden="true"><span>J</span><img src="img/suitHeart.svg" alt=""></div>
+                <div class="tut-bubble">
+                    <p class="tut-coach-name">Jack <span>your coach</span></p>
+                    <div class="tut-say" id="tut-say" aria-live="polite"></div>
+                    <p class="tut-feedback" id="tut-feedback" role="status" aria-live="polite"></p>
+                    <div class="tut-options" id="tut-options" role="group" aria-label="Answers"></div>
+                    <div class="tut-nav">
+                        <button type="button" class="tut-btn tut-btn-quiet" id="tut-prev">Back</button>
+                        <span class="tut-hint" id="tut-hint"></span>
+                        <button type="button" class="tut-btn tut-btn-primary" id="tut-next">Next</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <script src="rules.js"></script>
     <script src="storage.js"></script>
     <script src="game.js"></script>
+    <script src="tutorial-lessons.js"></script>
+    <script src="tutorial.js"></script>
 </body>
 
 </html>
