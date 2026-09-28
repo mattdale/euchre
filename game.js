@@ -68,6 +68,9 @@ const {
     getCardName
 } = window.EuchreRules;
 
+// Settings, the game in progress and lifetime stats persist in localStorage (see storage.js).
+const store = window.EuchreStorage.createStore();
+
 const SUIT_SYMBOLS = {
     'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
     'diamonds': '<img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" />',
@@ -145,6 +148,13 @@ function updateTrickTallyDisplay() {
 
 // Start a new game (called when deck is clicked)
 function startNewGame() {
+    // Leave 'setup' right away so a second click can't start a parallel game
+    gameState.gamePhase = 'dealing';
+    gameState.score = [0, 0];
+    gameState.makerIndex = null;
+    store.clearGame();
+    updateUI();
+
     // Show starting message
     messageEl.textContent = 'Starting game...';
 
@@ -1886,6 +1896,7 @@ function endHand() {
 
     // Update game score
     gameState.score[scoringTeam] += pointsAwarded;
+    store.recordHand({ makerTeam: gameState.makerTeam, outcome });
 
     console.log('Hand complete:', scoringMessage);
     console.log('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
@@ -1901,6 +1912,13 @@ function endHand() {
     updateUI(); // Update score display
 
     const isGameOver = getGameWinner(gameState.score, gameState.settings.winningScore) !== null;
+
+    // Checkpoint between hands so a reload resumes from here (saveGame ignores finished games)
+    store.saveGame({
+        score: gameState.score,
+        dealer: (gameState.dealer + 1) % 4,
+        winningScore: gameState.settings.winningScore
+    });
 
     if (scoringTeam === 1 - gameState.makerTeam) {
         // Trigger visual "Euchred" overlay, passing whether game is over
@@ -1932,6 +1950,9 @@ function endGame() {
     messageEl.textContent = `Game Over! ${winner} win ${gameState.score[0]}-${gameState.score[1]}!`;
 
     console.log('Game Over:', winner, 'Final score:', gameState.score);
+
+    store.clearGame();
+    store.recordGame(isPlayerWin);
 
     // Show the game won overlay
     showGameWonOverlay(isPlayerWin);
@@ -3043,23 +3064,78 @@ function handleCardClick(event) {
     playCard(card, 0);
 }
 
+// Fill the "Your record" panel in the settings modal
+function renderStats(stats) {
+    const grid = document.getElementById('stats-grid');
+    if (!grid) return;
+    const winRate = stats.gamesPlayed ? Math.round((stats.gamesWon / stats.gamesPlayed) * 100) : 0;
+    const rows = [
+        ['Games won', stats.gamesPlayed ? `${stats.gamesWon} of ${stats.gamesPlayed} (${winRate}%)` : 'None yet'],
+        ['Win streak', `${stats.currentStreak} (best ${stats.bestStreak})`],
+        ['You euchred them', stats.euchresDealt],
+        ['They euchred you', stats.euchresTaken],
+        ['Marches', stats.marches],
+        ['Loners marched', stats.lonersWon]
+    ];
+    grid.replaceChildren(...rows.flatMap(([label, value]) => {
+        const dt = document.createElement('dt');
+        dt.textContent = label;
+        const dd = document.createElement('dd');
+        dd.textContent = value;
+        return [dt, dd];
+    }));
+}
+
 // Event listeners
 const centerDeck = document.getElementById('center-deck');
 
-// Helper to start the game and hide setup UI
-function triggerGameStart() {
-    if (gameState.gamePhase !== 'setup') return;
-    // Hide the start game button
-    const startBtn = document.getElementById('start-game-btn');
-    if (startBtn) startBtn.classList.add('hidden');
-    startNewGame();
+const startGameBtn = document.getElementById('start-game-btn');
+const newGameBtn = document.getElementById('new-game-btn');
+
+function hideStartButtons() {
+    startGameBtn.classList.add('hidden');
+    newGameBtn.hidden = true;
 }
 
-// Start Game button click
-const startGameBtn = document.getElementById('start-game-btn');
-if (startGameBtn) {
-    startGameBtn.addEventListener('click', triggerGameStart);
+// Offer to pick up where the player left off, if there's a saved game
+function showStartButtons() {
+    const saved = store.loadGame();
+    startGameBtn.textContent = saved ? 'Resume Game' : 'Start Game';
+    newGameBtn.hidden = !saved;
+    if (saved) {
+        messageEl.textContent = `Welcome back! You ${saved.score[0]}, them ${saved.score[1]}.`;
+    }
 }
+
+// Resume from the last completed hand of a saved game
+function resumeGame(saved) {
+    gameState.gamePhase = 'dealing';
+    gameState.score = [...saved.score];
+    gameState.dealer = saved.dealer;
+    gameState.settings.winningScore = saved.winningScore;
+    updateUI();
+    messageEl.textContent = `Picking up at ${saved.score[0]}-${saved.score[1]}...`;
+    setTimeout(initGame, 1500);
+}
+
+// Primary start action: resume if there's a save, otherwise start fresh
+function triggerGameStart() {
+    if (gameState.gamePhase !== 'setup') return;
+    hideStartButtons();
+    const saved = store.loadGame();
+    if (saved) {
+        resumeGame(saved);
+    } else {
+        startNewGame();
+    }
+}
+
+startGameBtn.addEventListener('click', triggerGameStart);
+newGameBtn.addEventListener('click', () => {
+    if (gameState.gamePhase !== 'setup') return;
+    hideStartButtons();
+    startNewGame();
+});
 
 // Deck click kept as fallback (clickable class is removed after start)
 centerDeck.addEventListener('click', function () {
@@ -3112,6 +3188,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Set game phase to setup so deck click works
     gameState.gamePhase = 'setup';
+
+    // Restore remembered settings and offer to resume a saved game
+    gameState.settings = store.loadSettings();
+    document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
+    showStartButtons();
 
     // Fast-Forward Easter Egg Logic
     const gameContainer = document.querySelector('.game-container');
@@ -3275,6 +3356,7 @@ window.addEventListener('DOMContentLoaded', () => {
             }
             const settingBeginnerMode = document.getElementById('setting-beginner-mode');
             if (settingBeginnerMode) settingBeginnerMode.checked = gameState.settings.beginnerMode;
+            renderStats(store.loadStats());
             settingsModal.style.display = 'block';
         });
 
@@ -3288,8 +3370,30 @@ window.addEventListener('DOMContentLoaded', () => {
                 gameState.settings.beginnerMode = settingBeginnerMode.checked;
                 document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
             }
+            store.saveSettings(gameState.settings);
             settingsModal.style.display = 'none';
         });
+
+        // Reset record: two-step so a stray tap can't wipe it
+        const resetStatsBtn = document.getElementById('reset-stats-btn');
+        if (resetStatsBtn) {
+            let confirmTimer = null;
+            resetStatsBtn.addEventListener('click', () => {
+                if (resetStatsBtn.dataset.confirm !== 'true') {
+                    resetStatsBtn.dataset.confirm = 'true';
+                    resetStatsBtn.textContent = 'Tap again to reset';
+                    confirmTimer = originalSetTimeout(() => {
+                        resetStatsBtn.dataset.confirm = 'false';
+                        resetStatsBtn.textContent = 'Reset record';
+                    }, 3000);
+                    return;
+                }
+                clearTimeout(confirmTimer);
+                resetStatsBtn.dataset.confirm = 'false';
+                resetStatsBtn.textContent = 'Reset record';
+                renderStats(store.resetStats());
+            });
+        }
 
         // X button — closes without saving
         const modalCloseXBtn = document.getElementById('modal-close-x-btn');

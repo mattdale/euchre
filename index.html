@@ -186,6 +186,7 @@
 
                 <!-- Start Game button — visible during setup only -->
                 <button id="start-game-btn" class="start-game-btn">Start Game</button>
+                <button id="new-game-btn" class="new-game-btn" hidden>or start a new game</button>
             </div>
 
             <!-- Trump Suit Icons in Corners -->
@@ -302,6 +303,12 @@
                 <p id="difficulty-description" class="setting-description">Adjusts how the AI bids and plays cards.</p>
             </div>
 
+            <section class="stats-section" aria-labelledby="stats-heading">
+                <h3 id="stats-heading">Your record</h3>
+                <dl class="stats-grid" id="stats-grid"></dl>
+                <button type="button" id="reset-stats-btn" class="text-btn">Reset record</button>
+            </section>
+
             <button id="close-settings-btn" style="margin-top: 20px; width: 100%;">Save
                 & Close</button>
         </div>
@@ -333,6 +340,7 @@
     <div id="game-won-overlay" class="game-won-overlay"></div>
 
     <script src="rules.js"></script>
+    <script src="storage.js"></script>
     <script src="game.js"></script>
 </body>
 
