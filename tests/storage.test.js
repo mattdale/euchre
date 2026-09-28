@@ -125,6 +125,23 @@ describe('stats', () => {
     });
 });
 
+describe('tutorial progress', () => {
+    test('starts empty and remembers finished levels once each', () => {
+        const store = S.createStore(fakeStorage());
+        assert.deepEqual(store.loadTutorial(), { completed: [] });
+        store.completeTutorialLevel('basics');
+        store.completeTutorialLevel('trump');
+        assert.deepEqual(store.completeTutorialLevel('basics'), { completed: ['basics', 'trump'] });
+        assert.deepEqual(store.loadTutorial(), { completed: ['basics', 'trump'] });
+    });
+
+    test('drops junk from a hand-edited value', () => {
+        assert.deepEqual(S.sanitizeTutorial({ completed: ['basics', 42, '<script>', 'basics', ''] }), { completed: ['basics'] });
+        assert.deepEqual(S.sanitizeTutorial('nope'), { completed: [] });
+        assert.deepEqual(S.sanitizeTutorial({ completed: 'basics' }), { completed: [] });
+    });
+});
+
 describe('unavailable or failing storage', () => {
     test('no storage: everything still works with defaults', () => {
         const store = S.createStore(null);
@@ -133,6 +150,7 @@ describe('unavailable or failing storage', () => {
         assert.deepEqual(store.loadSettings(), S.DEFAULT_SETTINGS);
         assert.equal(store.loadGame(), null);
         assert.equal(store.recordGame(true).gamesWon, 1);
+        assert.deepEqual(store.completeTutorialLevel('basics'), { completed: ['basics'] });
     });
 
     test('quota errors on write are swallowed', () => {

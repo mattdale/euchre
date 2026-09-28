@@ -3,6 +3,7 @@
 A (slightly spicy) Euchre game built for fun.
 
 ## ✨ Features
+- **How to Play:** Five coached lessons on a practice table, from "what's a trick?" to going alone. Jack the coach explains, you play the cards, and finished levels are remembered.
 - **AI Opponents:** Play alongside and against computer-controlled players that understand the nuances of Euchre strategy (set to Intense mode by default).
 - **Classic Rules:** Supports the classic mechanics: Stick the Dealer, Going Alone, and standard trump bidding phases.
 - **Picks Up Where You Left Off:** Settings are remembered, and a reload resumes your game from the last completed hand.
@@ -24,10 +25,10 @@ Since it's built with vanilla web technologies, you don't need any complex setup
 | ← → | Move between cards in your hand |
 | Enter / Space | Play or discard the focused card, press the focused button |
 | 1–6 | Play or discard that card, counting from the left |
-| Esc | Close Settings without saving |
+| Esc | Close Settings without saving, or close How to Play |
 
 ## 🧪 Tests
-The rules engine (`rules.js`) and persistence (`storage.js`) are plain functions with no DOM, tested with Node's built-in runner:
+The rules engine (`rules.js`), persistence (`storage.js`) and the How to Play lessons (`tutorial-lessons.js`) are plain functions and data with no DOM, tested with Node's built-in runner. The lesson tests replay every scripted trick and quiz against the rules, so a lesson can't teach something the game disagrees with:
 
 ```sh
 npm test        # unit tests

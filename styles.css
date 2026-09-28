@@ -2732,6 +2732,8 @@ body.fast-forward .glitch-overlay {
     position: absolute;
     translate: 0 128px;
     z-index: 99999;
+    /* .play-area turns pointer events off for its children; this link needs them back */
+    pointer-events: auto;
     background: var(--color-bg-dark);
     border: none;
     border-radius: 8px;
@@ -3052,5 +3054,1050 @@ input:focus-visible + .slider,
     .player-position.west .player-info,
     .player-position.east .player-info {
         border-radius: 4px;
+    }
+}
+
+/* ═══ How to Play ═════════════════════════════════════════════════════════
+   Landing-page button plus the full-screen tutorial (tutorial.js). Cards here
+   are .tut-card, not .card, so the game's fan and deal rules never apply.
+   Sizes hang off --cw (card width); everything else is on a 4px grid. */
+
+.how-to-play-btn {
+    position: absolute;
+    translate: 0 128px;
+    z-index: 99999;
+    pointer-events: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-purple-dark);
+    border-radius: 8px;
+    background: var(--color-bg-dark);
+    color: var(--color-primary-light);
+    font: 500 1rem 'Instrument Sans', sans-serif;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.how-to-play-btn:hover {
+    color: var(--color-light);
+    border-color: var(--color-primary);
+    background: var(--color-bg-panel);
+}
+
+.how-to-play-btn:focus-visible,
+.tutorial button:focus-visible,
+.tut-card[role="button"]:focus-visible {
+    outline: 3px solid var(--color-yellow);
+    outline-offset: 2px;
+}
+
+.how-to-play-btn[hidden] {
+    display: none;
+}
+
+/* With a saved game, "or start a new game" takes the first slot under the deck */
+.new-game-btn:not([hidden]) ~ .how-to-play-btn {
+    translate: 0 180px;
+}
+
+@media (max-width: 480px) {
+    .how-to-play-btn {
+        translate: 0 100px;
+    }
+
+    .new-game-btn:not([hidden]) ~ .how-to-play-btn {
+        translate: 0 152px;
+    }
+}
+
+/* Landscape phones are short: sit the saved-game link and How to Play side by side */
+@media (max-height: 500px) and (orientation: landscape) {
+    .how-to-play-btn {
+        translate: 0 92px;
+        min-height: 40px;
+        padding: 4px 12px;
+    }
+
+    .new-game-btn:not([hidden]) {
+        translate: -96px 92px;
+    }
+
+    .new-game-btn:not([hidden]) ~ .how-to-play-btn {
+        translate: 96px 92px;
+    }
+}
+
+/* Before the deal, an empty seat shouldn't swallow taps meant for the buttons above it */
+.hand:empty,
+.player-position:has(> .hand:empty) {
+    pointer-events: none;
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+.tutorial {
+    position: fixed;
+    inset: 0;
+    z-index: 200000;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-dark);
+    color: var(--color-light);
+}
+
+.tutorial[hidden] {
+    display: none;
+}
+
+.tutorial [hidden] {
+    display: none !important;
+}
+
+.tut-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 8px;
+    min-height: 64px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--color-bg-panel);
+    flex: none;
+}
+
+.tut-bar-title {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    text-align: center;
+}
+
+.tut-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    line-height: 1.3;
+}
+
+.tut-bar h2 {
+    margin: 0;
+    padding: 0;
+    color: var(--color-light);
+    font-size: 1.125rem;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tut-icon-btn {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-primary-light);
+    cursor: pointer;
+}
+
+#tut-back-to-levels {
+    grid-column: 1;
+}
+
+#tut-close {
+    grid-column: 3;
+}
+
+.tut-icon-btn:hover {
+    background: var(--color-bg-panel);
+    color: var(--color-light);
+}
+
+.tut-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 3px;
+}
+
+.tut-progress-fill {
+    height: 100%;
+    width: 0;
+    background: var(--color-yellow);
+    border-radius: 0 2px 2px 0;
+    transition: width 0.4s ease;
+}
+
+/* ── Level picker ──────────────────────────────────────────────────────── */
+.tut-levels {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px 16px 40px;
+}
+
+.tut-levels-inner {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.tut-levels-intro {
+    color: var(--color-primary-light);
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.tut-levels-summary {
+    color: var(--color-yellow);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.tut-level-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.tut-level {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--color-white-alpha-10);
+    border-radius: 12px;
+    background: var(--color-bg-panel);
+    color: var(--color-light);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.tut-level:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-2px);
+}
+
+.tut-level.is-next {
+    border-color: var(--color-yellow-alpha-60);
+    box-shadow: 0 0 0 1px var(--color-yellow-alpha-30), 0 8px 24px var(--color-shadow-40);
+}
+
+.tut-level-num {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--color-purple-dark);
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.tut-level.is-done .tut-level-num {
+    background: var(--color-yellow);
+    /* Checkmark, drawn with CSS so it needs no icon font */
+    background-image: linear-gradient(var(--color-yellow), var(--color-yellow));
+    position: relative;
+}
+
+.tut-level.is-done .tut-level-num::after {
+    content: '';
+    width: 12px;
+    height: 20px;
+    margin-top: -4px;
+    border: solid var(--color-bg-dark);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+.tut-level-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.tut-level-title {
+    font-weight: 600;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+}
+
+.tut-level-blurb {
+    color: var(--color-primary-light);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.tut-level-status {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-primary-light);
+    white-space: nowrap;
+}
+
+.tut-level.is-next .tut-level-status {
+    color: var(--color-bg-dark);
+    background: var(--color-yellow);
+    padding: 4px 12px;
+    border-radius: 999px;
+}
+
+@media (max-width: 480px) {
+    .tut-level {
+        grid-template-columns: 40px minmax(0, 1fr);
+        gap: 4px 12px;
+    }
+
+    .tut-level-status {
+        grid-column: 2;
+        justify-self: start;
+    }
+}
+
+/* ── Lesson layout: table on top, coach below; side by side when wide ── */
+.tut-lesson {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+}
+
+@media (min-width: 900px), (orientation: landscape) and (min-width: 640px) {
+    .tut-lesson {
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+        grid-template-rows: minmax(0, 1fr);
+    }
+}
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+.tut-table {
+    --cw: 3.5rem;
+    position: relative;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        ". north ."
+        "west center east"
+        "you you you";
+    align-items: center;
+    justify-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: radial-gradient(ellipse at 50% 45%, rgba(83, 64, 104, 0.45), transparent 70%);
+    overflow: hidden;
+}
+
+@media (min-width: 600px) and (min-height: 700px) {
+    .tut-table {
+        --cw: 4.5rem;
+        padding: 24px;
+    }
+}
+
+@media (min-width: 1200px) and (min-height: 800px) {
+    .tut-table {
+        --cw: 5.25rem;
+    }
+
+    .tut-mini-hand .tut-card {
+        --cw: 2rem;
+    }
+
+    .tut-mini-hand .tut-card + .tut-card {
+        margin-left: -1.25rem;
+    }
+}
+
+/* Keep the seats close to the cards on very wide screens */
+.tut-table {
+    width: 100%;
+    max-width: 1040px;
+    justify-self: center;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .tut-table {
+        --cw: 2.75rem;
+        padding: 8px 16px;
+        gap: 4px;
+    }
+
+    .tut-bar {
+        min-height: 48px;
+        padding: 2px 16px;
+    }
+}
+
+.tut-trump {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid var(--color-yellow-alpha-40);
+    border-radius: 999px;
+    background: var(--color-bg-dark);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.tut-trump .suit-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+@media (max-width: 400px) {
+    .tut-trump-name {
+        display: none;
+    }
+}
+
+/* Finish card: two fanned bowers and a dot per level */
+.tut-celebrate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    animation: tut-pop 0.4s ease-out;
+}
+
+.tut-celebrate-cards {
+    display: flex;
+    padding-top: 8px;
+}
+
+.tut-celebrate-cards .tut-card {
+    --cw: 4.5rem;
+    box-shadow: 0 0 0 2px var(--color-yellow), 0 8px 24px var(--color-shadow-50);
+}
+
+.tut-celebrate-cards .tut-card:first-child {
+    rotate: -10deg;
+    margin-right: -1rem;
+}
+
+.tut-celebrate-cards .tut-card:last-child {
+    rotate: 10deg;
+    translate: 0 -4px;
+}
+
+.tut-celebrate-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-yellow);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.tut-celebrate-dots {
+    list-style: none;
+    display: flex;
+    gap: 8px;
+}
+
+.tut-celebrate-dots li {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-purple-dark);
+}
+
+.tut-celebrate-dots li.is-done {
+    background: var(--color-yellow);
+}
+
+.tut-seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tut-seat[data-seat="north"] { grid-area: north; }
+.tut-seat[data-seat="west"] { grid-area: west; }
+.tut-seat[data-seat="east"] { grid-area: east; }
+.tut-seat[data-seat="south"] { grid-area: you; }
+
+.tut-seat-label {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    background: var(--color-purple-dark);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    text-align: center;
+    transition: box-shadow 0.3s ease;
+}
+
+.tut-seat[data-seat="west"] .tut-seat-label,
+.tut-seat[data-seat="east"] .tut-seat-label {
+    background: var(--color-burgundy);
+}
+
+.tut-seat.is-glow .tut-seat-label {
+    box-shadow: 0 0 0 2px var(--color-yellow), 0 0 16px var(--color-yellow-alpha-50);
+}
+
+.tut-seat.is-out .tut-mini-hand,
+.tut-seat.is-out .tut-seat-label {
+    opacity: 0.5;
+}
+
+.tut-badge {
+    padding: 0 6px;
+    border-radius: 4px;
+    background: var(--color-yellow);
+    color: var(--color-bg-dark);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tut-badge-out {
+    background: var(--color-light);
+}
+
+.tut-mini-hand {
+    display: flex;
+    min-height: calc(1.5rem * 1.4);
+}
+
+.tut-mini-hand .tut-card {
+    --cw: 1.5rem;
+}
+
+.tut-mini-hand .tut-card + .tut-card {
+    margin-left: -0.875rem;
+}
+
+.tut-mini-hand.is-face-up .tut-card {
+    --cw: 2.25rem;
+}
+
+.tut-mini-hand.is-face-up .tut-card + .tut-card {
+    margin-left: -1rem;
+}
+
+/* Center: four trick slots around the up card, or a showcase row */
+.tut-center {
+    grid-area: center;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: 0;
+}
+
+.tut-table.has-showcase .tut-center {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+.tut-table.has-showcase .tut-seat[data-seat="west"],
+.tut-table.has-showcase .tut-seat[data-seat="east"] {
+    visibility: hidden;
+}
+
+.tut-trick {
+    position: relative;
+    width: calc(var(--cw) * 3.1);
+    height: calc(var(--cw) * 1.4 * 2.2);
+}
+
+.tut-slot {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tut-slot[data-seat="north"] { top: 0; left: 50%; translate: -50% 0; }
+.tut-slot[data-seat="south"] { bottom: 0; left: 50%; translate: -50% 0; }
+.tut-slot[data-seat="west"] { left: 0; top: 50%; translate: 0 -50%; }
+.tut-slot[data-seat="east"] { right: 0; top: 50%; translate: 0 -50%; }
+
+.tut-slot { z-index: 1; }
+.tut-slot:has(.is-winner) { z-index: 3; }
+
+.tut-slot[data-seat="north"] .is-played { --fx: 0; --fy: -40px; }
+.tut-slot[data-seat="south"] .is-played { --fx: 0; --fy: 40px; }
+.tut-slot[data-seat="west"] .is-played { --fx: -40px; --fy: 0; }
+.tut-slot[data-seat="east"] .is-played { --fx: 40px; --fy: 0; }
+
+.tut-card.is-played {
+    animation: tut-play-in 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.1);
+}
+
+@keyframes tut-play-in {
+    from {
+        opacity: 0;
+        transform: translate(var(--fx), var(--fy)) scale(0.9);
+    }
+}
+
+.tut-win-tag {
+    position: absolute;
+    top: 100%;
+    margin-top: 4px;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: var(--color-yellow);
+    color: var(--color-bg-dark);
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    animation: tut-pop 0.3s ease-out;
+}
+
+.tut-slot[data-seat="south"] .tut-win-tag {
+    top: auto;
+    bottom: 100%;
+    margin: 0 0 4px;
+}
+
+@keyframes tut-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+.tut-kitty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    translate: -50% -50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.tut-kitty-caption {
+    font-size: 0.75rem;
+    color: var(--color-primary-light);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tut-showcase {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 16px 8px;
+    width: 100%;
+    max-width: calc(var(--cw) * 7 + 48px);
+}
+
+.tut-showcase-item {
+    flex: 0 1 var(--cw);
+    min-width: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.tut-showcase-item .tut-card {
+    width: 100%;
+}
+
+.tut-showcase-item figcaption {
+    font-size: 0.75rem;
+    line-height: 1.3;
+    color: var(--color-primary-light);
+    text-align: center;
+    min-height: 1em;
+}
+
+/* Your hand: a flat row that shrinks to fit six cards on a phone */
+.tut-hand {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: calc(var(--cw) * 6 + 40px);
+    padding-top: 12px;
+}
+
+.tut-hand .tut-card {
+    flex: 0 1 var(--cw);
+    min-width: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.tut-hand.is-active .tut-card {
+    cursor: pointer;
+    box-shadow: 0 0 0 2px var(--color-primary-light), -2px 3px 10px var(--color-shadow-30);
+}
+
+.tut-hand.is-active .tut-card:hover {
+    transform: translateY(-8px);
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────── */
+.tut-card {
+    position: relative;
+    width: var(--cw);
+    aspect-ratio: 5 / 7;
+    flex: none;
+    container-type: inline-size;
+    border: 1px solid var(--color-card-border);
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 50%, var(--color-card-gradient-end) 100%);
+    box-shadow: -2px 3px 10px var(--color-shadow-30);
+    color: var(--color-text-dark);
+    user-select: none;
+    transition: box-shadow 0.3s ease, opacity 0.3s ease;
+}
+
+.tut-card.red {
+    color: var(--color-red);
+}
+
+.tut-card-corner {
+    position: absolute;
+    top: 6%;
+    left: 9%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: max(0.625rem, 28cqi);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.tut-card-corner .suit-icon {
+    width: 0.8em;
+    height: 0.8em;
+}
+
+.tut-card-pip {
+    position: absolute;
+    right: 12%;
+    bottom: 10%;
+    width: 44%;
+    height: auto;
+}
+
+.tut-card.tut-back {
+    background-color: var(--color-purple-dark);
+    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
+    background-size: 8px 8px;
+    border-color: var(--color-light);
+    border-radius: 4px;
+}
+
+.tut-card.is-highlight,
+.tut-card.is-winner {
+    box-shadow: 0 0 0 3px var(--color-yellow), 0 0 20px var(--color-yellow-alpha-60);
+}
+
+.tut-card.is-highlight {
+    animation: tut-glow 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes tut-glow {
+    to {
+        box-shadow: 0 0 0 3px var(--color-yellow), 0 0 8px var(--color-yellow-alpha-30);
+    }
+}
+
+.tut-card.is-dim {
+    opacity: 0.45;
+}
+
+.is-shake {
+    animation: tut-shake 0.4s ease;
+}
+
+@keyframes tut-shake {
+    20%, 60% { translate: -6px 0; }
+    40%, 80% { translate: 6px 0; }
+}
+
+/* Inline card chips and suit symbols in coach text */
+.tut-chip,
+.tut-suit {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.15em;
+    font-weight: 700;
+}
+
+.tut-chip {
+    gap: 1px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: var(--color-light);
+    color: var(--color-text-dark);
+    font-size: 0.875em;
+    line-height: 1.5;
+}
+
+.tut-chip.red {
+    color: var(--color-red);
+}
+
+.tut-chip .suit-icon,
+.tut-suit .suit-icon {
+    width: 0.9em;
+    height: 0.9em;
+}
+
+/* Suit icons are drawn for light cards; lift black ones on the dark UI */
+.tut-suit.black .suit-icon,
+.tut-trump .suit-icon[src*="Club"],
+.tut-trump .suit-icon[src*="Spade"] {
+    filter: invert(1);
+}
+
+/* ── Coach ─────────────────────────────────────────────────────────────── */
+.tut-coach {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-top: 1px solid var(--color-bg-panel);
+    background: linear-gradient(180deg, var(--color-bg-panel) 0%, var(--color-bg-dark) 100%);
+    max-height: 48dvh;
+    overflow-y: auto;
+}
+
+@media (min-width: 900px), (orientation: landscape) and (min-width: 640px) {
+    .tut-coach {
+        border-top: none;
+        border-left: 1px solid var(--color-bg-panel);
+        max-height: none;
+        padding: 32px 24px;
+        align-items: flex-start;
+        align-self: stretch;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .tut-coach {
+        padding: 12px 16px;
+    }
+}
+
+.tut-avatar {
+    flex: none;
+    width: 40px;
+    aspect-ratio: 5 / 7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 100%);
+    box-shadow: 0 0 0 2px var(--color-yellow), 0 4px 12px var(--color-shadow-40);
+    color: var(--color-red);
+    font-weight: 700;
+    font-size: 1.125rem;
+    line-height: 1;
+    rotate: -6deg;
+}
+
+.tut-avatar img {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+}
+
+.tut-bubble {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tut-coach-name {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--color-yellow);
+    line-height: 1.2;
+}
+
+.tut-coach-name span {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.tut-say {
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.tut-say p + p,
+.tut-say p + ul,
+.tut-say ul + p {
+    margin-top: 8px;
+}
+
+.tut-say ul {
+    padding-left: 20px;
+    margin-top: 4px;
+}
+
+.tut-say li + li {
+    margin-top: 2px;
+}
+
+.tut-say strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+.tut-feedback {
+    padding: 8px 12px;
+    border-left: 3px solid var(--color-orange);
+    border-radius: 6px;
+    background: rgba(243, 156, 18, 0.12);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.tut-feedback:empty {
+    display: none;
+}
+
+.tut-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tut-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid var(--color-purple-dark);
+    border-radius: 8px;
+    background: var(--color-bg-dark);
+    color: var(--color-light);
+    font: 500 1rem 'Instrument Sans', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.tut-option:hover:not(:disabled) {
+    border-color: var(--color-primary-light);
+    background: var(--color-bg-panel);
+}
+
+.tut-option.is-wrong {
+    opacity: 0.45;
+    text-decoration: line-through;
+    cursor: default;
+}
+
+.tut-option.is-correct {
+    border-color: var(--color-yellow);
+    box-shadow: 0 0 0 1px var(--color-yellow);
+    opacity: 1;
+    cursor: default;
+}
+
+.tut-option:disabled:not(.is-correct):not(.is-wrong) {
+    opacity: 0.45;
+}
+
+.tut-options.is-finish {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.tut-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+}
+
+.tut-hint {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--color-primary-light);
+    text-align: right;
+}
+
+.tut-btn {
+    min-height: 44px;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font: 600 1rem 'Instrument Sans', sans-serif;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.tut-btn-primary {
+    border: none;
+    background: var(--color-primary-light);
+    color: var(--color-bg-dark);
+}
+
+.tut-btn-primary:hover {
+    background: var(--color-light);
+}
+
+.tut-btn-quiet {
+    border: 1px solid var(--color-purple-dark);
+    background: transparent;
+    color: var(--color-primary-light);
+}
+
+.tut-btn-quiet:hover {
+    color: var(--color-light);
+    border-color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tut-card,
+    .tut-card.is-played,
+    .tut-card.is-highlight,
+    .tut-win-tag,
+    .is-shake,
+    .tut-level,
+    .tut-celebrate,
+    .tut-progress-fill {
+        animation: none !important;
+        transition: none !important;
     }
 }

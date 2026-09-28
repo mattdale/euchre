@@ -3265,9 +3265,12 @@ const centerDeck = document.getElementById('center-deck');
 const startGameBtn = document.getElementById('start-game-btn');
 const newGameBtn = document.getElementById('new-game-btn');
 
+const howToPlayBtn = document.getElementById('how-to-play-btn');
+
 function hideStartButtons() {
     startGameBtn.classList.add('hidden');
     newGameBtn.hidden = true;
+    howToPlayBtn.hidden = true;
 }
 
 // Offer to pick up where the player left off, if there's a saved game
@@ -3275,6 +3278,7 @@ function showStartButtons() {
     const saved = store.loadGame();
     startGameBtn.textContent = saved ? 'Resume Game' : 'Start Game';
     newGameBtn.hidden = !saved;
+    howToPlayBtn.hidden = false;
     if (saved) {
         messageEl.textContent = `Welcome back! You ${saved.score[0]}, them ${saved.score[1]}.`;
     }
