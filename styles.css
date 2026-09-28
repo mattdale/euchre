@@ -496,8 +496,22 @@ h1 {
     border-radius: 4px;
     margin-left: 6px;
     display: none;
-    animation: makerBadgePulse 2s infinite;
+    position: relative;
+    box-shadow: 0 0 5px var(--color-purple-alpha-50);
     line-height: normal;
+}
+
+/* The pulsing glow lives on its own layer and only its opacity animates, so it runs on
+   the compositor. Animating box-shadow directly repainted every frame for the whole hand. */
+.maker-badge::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 15px var(--color-purple-alpha-80);
+    opacity: 0;
+    pointer-events: none;
+    animation: makerBadgePulse 2s infinite;
 }
 
 .maker-badge.active {
@@ -505,16 +519,13 @@ h1 {
 }
 
 @keyframes makerBadgePulse {
-    0% {
-        box-shadow: 0 0 5px var(--color-purple-alpha-50);
+    0%,
+    100% {
+        opacity: 0;
     }
 
     50% {
-        box-shadow: 0 0 15px var(--color-purple-alpha-80);
-    }
-
-    100% {
-        box-shadow: 0 0 5px var(--color-purple-alpha-50);
+        opacity: 1;
     }
 }
 
@@ -706,7 +717,14 @@ h1 {
 .start-game-btn.hidden {
     opacity: 0 !important;
     pointer-events: none !important;
-    transition: opacity 0.3s ease-out;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
+}
+
+/* Its shine and glow loop forever; stop them once the button is gone */
+.start-game-btn.hidden::before,
+.start-game-btn.hidden::after {
+    animation: none;
 }
 
 .start-game-btn:before {
@@ -807,6 +825,10 @@ h1 {
 
 .dealer-connection-line path {
     stroke-dashoffset: 0;
+}
+
+/* Only march the dashes while the line is showing */
+.dealer-connection-line.active path {
     animation: dealerLineFlow 1s linear infinite;
 }
 
@@ -2398,10 +2420,10 @@ body.beginner-mode .card.is-trump:hover {
     line-height: 1;
 }
 
-.modal-close-btn i {
-    font-size: 1.15rem;
+.modal-close-btn .modal-close-icon {
+    width: 1.15rem;
+    height: 1.15rem;
     display: block;
-    color: var(--color-bg-dark);
 }
 
 .modal-close-btn:hover {

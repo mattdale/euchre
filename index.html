@@ -10,13 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
 <body>
     <!-- Fast-forward visual effect overlay -->
-    <video id="glitch-overlay" class="glitch-overlay" src="glitch.mp4" loop muted playsinline aria-hidden="true"></video>
+    <video id="glitch-overlay" class="glitch-overlay" src="glitch.mp4" preload="none" loop muted playsinline aria-hidden="true"></video>
 
     <!-- Full width header -->
     <header class="game-header">
@@ -260,7 +258,7 @@
     <!-- Settings Modal -->
     <div class="settings-modal" id="settings-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <button class="modal-close-btn" id="modal-close-x-btn" aria-label="Close settings">
-            <i class="ph ph-x" aria-hidden="true"></i>
+            <svg class="modal-close-icon" viewBox="0 0 256 256" aria-hidden="true" focusable="false"><path fill="currentColor" d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg>
         </button>
         <div class="modal-content">
             <h2 id="settings-title">Game Settings</h2>

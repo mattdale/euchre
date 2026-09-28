@@ -71,9 +71,52 @@ const {
 // Settings, the game in progress and lifetime stats persist in localStorage (see storage.js).
 const store = window.EuchreStorage.createStore();
 
-// Honor the OS "reduce motion" setting for jQuery fades too (CSS transitions are handled in styles.css)
+// Verbose turn-by-turn logging. Off by default: formatting ~100 log lines per hand is
+// wasted work for players. Turn on with ?debug in the URL.
+const DEBUG = new URLSearchParams(location.search).has('debug');
+const debugLog = DEBUG ? console.log.bind(console) : () => {};
+
+// Honor the OS "reduce motion" setting for JS fades too (CSS transitions are handled in styles.css)
 const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-if (prefersReducedMotion && window.jQuery) jQuery.fx.off = true;
+
+// ─── Fades (Web Animations API; replaces jQuery's fadeIn/fadeOut) ────────
+// Opacity-only animations run on the compositor. A new fade cancels one in flight,
+// so the element always ends in the state that was asked for last.
+
+function isShown(el) {
+    return !!el && el.getClientRects().length > 0;
+}
+
+function cancelFade(el) {
+    if (el._fade) {
+        el._fade.onfinish = null;
+        el._fade.cancel();
+        el._fade = null;
+    }
+}
+
+function fadeIn(el, duration = 400) {
+    if (!el) return;
+    cancelFade(el);
+    el.style.display = '';
+    if (getComputedStyle(el).display === 'none') el.style.display = 'block';
+    if (prefersReducedMotion) return;
+    el._fade = el.animate([{ opacity: 0 }, { opacity: getComputedStyle(el).opacity }], { duration, easing: 'ease-in-out' });
+    el._fade.onfinish = () => { el._fade = null; };
+}
+
+function fadeOut(el, duration = 400, onDone) {
+    if (!el) return;
+    cancelFade(el);
+    const finish = () => {
+        el._fade = null;
+        el.style.display = 'none';
+        onDone?.();
+    };
+    if (!isShown(el) || prefersReducedMotion) return finish();
+    el._fade = el.animate([{ opacity: getComputedStyle(el).opacity }, { opacity: 0 }], { duration, easing: 'ease-in-out' });
+    el._fade.onfinish = finish;
+}
 
 const SUIT_SYMBOLS = {
     'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
@@ -254,7 +297,7 @@ function initGame() {
 // Deal cards to all players with animation in Euchre style (3-2-3-2)
 function dealCards() {
     // Clear all hands first
-    $('.hand').empty();
+    document.querySelectorAll('.hand').forEach(hand => hand.replaceChildren());
 
     // Ensure all hand containers are visible (reset from going alone)
     const handElements = [playerHandEl, westHandEl, northHandEl, eastHandEl];
@@ -303,20 +346,20 @@ function dealCards() {
     }
 
     // The top card of the remaining deck is the potential trump
-    console.log('Deck length before trump candidate:', gameState.deck.length);
+    debugLog('Deck length before trump candidate:', gameState.deck.length);
     const topCard = gameState.deck.pop();
     if (topCard) {
         gameState.deck.push(topCard); // Put it back for now
         gameState.trumpCandidate = topCard; // Set it immediately
-        console.log('Trump candidate set:', topCard);
+        debugLog('Trump candidate set:', topCard);
     } else {
         console.error('No cards left in deck for trump candidate!');
     }
 
     // Debug: Log hand sizes after dealing
-    console.log('After dealing - Player hand size:', gameState.playerHand.length);
-    console.log('After dealing - Computer hands:', gameState.computerHands.map(hand => hand.length));
-    console.log('After dealing - Deck remaining:', gameState.deck.length);
+    debugLog('After dealing - Player hand size:', gameState.playerHand.length);
+    debugLog('After dealing - Computer hands:', gameState.computerHands.map(hand => hand.length));
+    debugLog('After dealing - Deck remaining:', gameState.deck.length);
 
     // After all cards are dealt, show trump candidate (keep deck visible)
     setTimeout(() => {
@@ -327,13 +370,13 @@ function dealCards() {
 // Start the bidding phase
 function startBidding() {
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
-    console.log('=== startBidding called ===');
-    console.log('Current player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
-    console.log('Passed players:', gameState.passedPlayers);
+    debugLog('=== startBidding called ===');
+    debugLog('Current player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
+    debugLog('Passed players:', gameState.passedPlayers);
 
     // If trump is already set, don't continue bidding
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ending bidding phase');
+        debugLog('Trump already set, ending bidding phase');
         return;
     }
 
@@ -390,9 +433,9 @@ function startBidding() {
             // Show prominent user turn dialog with bidding buttons
             showUserTurnDialog(`Order up ${getCardName(candidateCard)}?`, 'bidding');
         } else {
-            console.log('=== Starting computer turn ===');
-            console.log('Player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
-            console.log('Bidding round:', gameState.biddingRound);
+            debugLog('=== Starting computer turn ===');
+            debugLog('Player:', gameState.currentPlayer, '(' + playerNames[gameState.currentPlayer] + ')');
+            debugLog('Bidding round:', gameState.biddingRound);
             messageEl.textContent = `${playerNames[gameState.currentPlayer]}'s turn. Order up ${getCardName(candidateCard)}?`;
             setTimeout(computerBid, 1950); // Sped up for slightly faster AI thinking
         }
@@ -429,24 +472,24 @@ function startBidding() {
 function computerBid() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to bid while turn is already processing - skipping');
+        debugLog('AI tried to bid while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI bid
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to bid on player turn - skipping');
+        debugLog('AI tried to bid on player turn - skipping');
         return;
     }
 
     gameState.isProcessingTurn = true;
     gameState.lastStateChange = Date.now();
 
-    console.log('computerBid called for player:', gameState.currentPlayer);
+    debugLog('computerBid called for player:', gameState.currentPlayer);
 
     // Prevent duplicate calls if trump is already set
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring computerBid call');
+        debugLog('Trump already set, ignoring computerBid call');
         gameState.isProcessingTurn = false;
         return;
     }
@@ -548,24 +591,24 @@ function computerBid() {
 function computerCallTrump() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to call trump while turn is already processing - skipping');
+        debugLog('AI tried to call trump while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI play
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to call trump on player turn - skipping');
+        debugLog('AI tried to call trump on player turn - skipping');
         return;
     }
 
     gameState.isProcessingTurn = true;
     gameState.lastStateChange = Date.now();
 
-    console.log('computerCallTrump called for player:', gameState.currentPlayer);
+    debugLog('computerCallTrump called for player:', gameState.currentPlayer);
 
     // Prevent duplicate calls if trump is already set
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring computerCallTrump call');
+        debugLog('Trump already set, ignoring computerCallTrump call');
         gameState.isProcessingTurn = false;
         return;
     }
@@ -715,7 +758,7 @@ function orderUp(suit, goingAlone = false) {
 
     // Prevent duplicate calls
     if (gameState.trumpSuit) {
-        console.log('Trump already set, ignoring duplicate orderUp call');
+        debugLog('Trump already set, ignoring duplicate orderUp call');
         return;
     }
 
@@ -729,7 +772,7 @@ function orderUp(suit, goingAlone = false) {
     gameState.makerTeam = (gameState.makerIndex === 0 || gameState.makerIndex === 2) ? 0 : 1;
     gameState.makerIsAlone = goingAlone;
 
-    console.log('Trump made by player:', gameState.makerIndex, 'Team:', gameState.makerTeam, 'Alone:', goingAlone);
+    debugLog('Trump made by player:', gameState.makerIndex, 'Team:', gameState.makerTeam, 'Alone:', goingAlone);
 
     // If going alone, show special message
     if (goingAlone) {
@@ -739,7 +782,7 @@ function orderUp(suit, goingAlone = false) {
         // Set partner index based on maker
         const partnerIndex = getPartnerIndex(gameState.makerIndex);
         gameState.partnerSittingOut = partnerIndex;
-        console.log('Partner sitting out:', partnerIndex);
+        debugLog('Partner sitting out:', partnerIndex);
 
         // Hide the partner's hand
         updatePartnerHandVisibility();
@@ -752,7 +795,7 @@ function orderUp(suit, goingAlone = false) {
         // Round 1: Dealer picks up the trump candidate card and must discard
         const topCard = gameState.deck.pop();
         if (gameState.dealer === 0) {
-            console.log('Player hand before trump pickup:', gameState.playerHand.length);
+            debugLog('Player hand before trump pickup:', gameState.playerHand.length);
             // Mark the trump card for visual distinction
             topCard.isTrumpPickup = true;
 
@@ -772,7 +815,7 @@ function orderUp(suit, goingAlone = false) {
                 const discardIndex = gameState.playerHand.indexOf(cardToDiscard);
                 gameState.playerHand.splice(discardIndex, 1);
 
-                console.log('Player hand after auto-discard:', gameState.playerHand.length);
+                debugLog('Player hand after auto-discard:', gameState.playerHand.length);
                 renderPlayerHand();
 
                 messageEl.textContent = 'You are sitting out this hand. Your partner is going alone!';
@@ -783,7 +826,7 @@ function orderUp(suit, goingAlone = false) {
                 }, 1500);
             } else {
                 gameState.playerHand.push(topCard);
-                console.log('Player hand after trump pickup:', gameState.playerHand.length);
+                debugLog('Player hand after trump pickup:', gameState.playerHand.length);
 
                 // DON'T re-render the hand — existing cards are already positioned correctly.
                 // Just append the trump pickup card directly as an offset floating card,
@@ -804,6 +847,8 @@ function orderUp(suit, goingAlone = false) {
                     trumpEl.style.transform = baseT;
                 });
                 playerHandEl.appendChild(trumpEl);
+                // Settle it into the fan's 6th-card slot on the next tick (so it transitions in)
+                setTimeout(updateSouthHandFan, 10);
 
                 // Player dealer needs to discard
                 gameState.gamePhase = 'discarding';
@@ -953,10 +998,10 @@ function animateComputerTrumpPickupAndDiscard(dealerIndex, topCard, onComplete) 
 
 // Computer dealer discards a card
 function computerDiscard() {
-    console.log('computerDiscard called - dealer:', gameState.dealer);
+    debugLog('computerDiscard called - dealer:', gameState.dealer);
     const dealerHand = gameState.computerHands[gameState.dealer - 1];
-    console.log('Dealer hand size:', dealerHand ? dealerHand.length : 'undefined');
-    console.log('Dealer hand:', dealerHand);
+    debugLog('Dealer hand size:', dealerHand ? dealerHand.length : 'undefined');
+    debugLog('Dealer hand:', dealerHand);
 
     if (!dealerHand || dealerHand.length === 0) {
         console.error('Dealer hand is empty or undefined!');
@@ -1158,7 +1203,7 @@ function finishDiscardPhase() {
 function pass() {
     gameState.isProcessingTurn = false; // Release turn lock
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
-    console.log(playerNames[gameState.currentPlayer] + ' passes');
+    debugLog(playerNames[gameState.currentPlayer] + ' passes');
 
     // Check if this is an illegal pass (Stick the Dealer)
     if (gameState.settings.stickTheDealer && gameState.biddingRound === 2 &&
@@ -1182,7 +1227,7 @@ function pass() {
     const nextPlayerClockwise = [1, 2, 3, 0]; // Next player for each current player index
     const previousPlayer = gameState.currentPlayer;
     gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
-    console.log('Turn progression:', playerNames[previousPlayer], '→', playerNames[gameState.currentPlayer]);
+    debugLog('Turn progression:', playerNames[previousPlayer], '→', playerNames[gameState.currentPlayer]);
 
     // Check if we've gone through all players in this round
     if (gameState.passedPlayers.length === 4) {
@@ -1215,7 +1260,7 @@ function pass() {
     }
 
     // Continue bidding with next player
-    console.log('Continuing bidding after pass...');
+    debugLog('Continuing bidding after pass...');
     setTimeout(startBidding, 1200); // Slowed from 1000 to 1200
 }
 
@@ -1234,13 +1279,11 @@ function startTrick() {
     showTrickTallyMode();
 
     // Clear only trick cards (preserve center-deck)
-    $(trickCardsEl).find('.trick-card').fadeOut(300, function () {
-        $(this).remove();
-    });
+    trickCardsEl.querySelectorAll('.trick-card').forEach(card => fadeOut(card, 300, () => card.remove()));
 
     // Check if current player is sitting out and skip them
     if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-        console.log('Player', gameState.currentPlayer, 'is sitting out - skipping turn');
+        debugLog('Player', gameState.currentPlayer, 'is sitting out - skipping turn');
         const nextPlayerClockwise = [1, 2, 3, 0];
         gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
         // Don't increment cardsPlayed - no card was actually played
@@ -1268,13 +1311,13 @@ function startTrick() {
 function computerPlayCard() {
     // GUARD: Prevent overlapping AI turns
     if (gameState.isProcessingTurn) {
-        console.log('AI tried to play while turn is already processing - skipping');
+        debugLog('AI tried to play while turn is already processing - skipping');
         return;
     }
 
     // GUARD: If it's the player's turn, don't let AI play
     if (gameState.currentPlayer === 0) {
-        console.log('AI tried to play on player turn - skipping');
+        debugLog('AI tried to play on player turn - skipping');
         return;
     }
 
@@ -1284,7 +1327,7 @@ function computerPlayCard() {
     try {
         // Check if this player is sitting out (partner going alone)
         if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-            console.log('Player', gameState.currentPlayer, 'is sitting out (partner going alone)');
+            debugLog('Player', gameState.currentPlayer, 'is sitting out (partner going alone)');
             const nextPlayerClockwise = [1, 2, 3, 0];
             gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
 
@@ -1677,7 +1720,7 @@ function playCard(card, playerIndex) {
             c.suit === card.suit && c.value === card.value
         );
         if (cardIndex !== -1) {
-            cardEl = $(playerHandEl).find(`[data-index="${cardIndex}"]`)[0];
+            cardEl = playerHandEl.querySelector(`[data-index="${cardIndex}"]`);
             gameState.playerHand.splice(cardIndex, 1);
         }
     } else {
@@ -1687,7 +1730,7 @@ function playCard(card, playerIndex) {
         );
         if (cardIndex !== -1) {
             const handEl = handElements[playerIndex];
-            cardEl = $(handEl).find('.card').eq(cardIndex)[0];
+            cardEl = handEl.querySelectorAll('.card')[cardIndex];
             hand.splice(cardIndex, 1);
         }
     }
@@ -1708,7 +1751,7 @@ function playCard(card, playerIndex) {
 
     // Skip the sitting out partner if going alone
     if (gameState.makerIsAlone && gameState.currentPlayer === gameState.partnerSittingOut) {
-        console.log('Skipping sitting out partner:', gameState.currentPlayer);
+        debugLog('Skipping sitting out partner:', gameState.currentPlayer);
         gameState.currentPlayer = nextPlayerClockwise[gameState.currentPlayer];
         // Don't increment cardsPlayed - no card was actually played
     }
@@ -1754,7 +1797,7 @@ function playCard(card, playerIndex) {
 function determineTrickWinner() {
     // GUARD: prevent double-fire (can happen with overlapping timeouts)
     if (gameState.isProcessingTrick) {
-        console.log('determineTrickWinner called while already processing - skipping');
+        debugLog('determineTrickWinner called while already processing - skipping');
         return;
     }
     gameState.isProcessingTrick = true;
@@ -1783,8 +1826,8 @@ function determineTrickWinner() {
     }
     gameState.tricksPlayed++;
 
-    console.log(`Trick ${gameState.tricksPlayed} won by team ${winningTeam}`);
-    console.log('Tricks this hand:', gameState.tricksThisHand);
+    debugLog(`Trick ${gameState.tricksPlayed} won by team ${winningTeam}`);
+    debugLog('Tricks this hand:', gameState.tricksThisHand);
 
     // Update tally marks for the winner
     updateTrickTally(actualWinnerIndex);
@@ -1873,7 +1916,7 @@ function animateTrickToWinner(winnerIndex) {
 
     // Clear only trick cards after animation (preserve center-deck)
     setTimeout(() => {
-        $(trickCardsEl).find('.trick-card').remove();
+        trickCardsEl.querySelectorAll('.trick-card').forEach(card => card.remove());
     }, 1200);
 }
 
@@ -1914,9 +1957,9 @@ function endHand() {
     gameState.score[scoringTeam] += pointsAwarded;
     store.recordHand({ makerTeam: gameState.makerTeam, outcome });
 
-    console.log('Hand complete:', scoringMessage);
-    console.log('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
-    console.log('New score:', gameState.score);
+    debugLog('Hand complete:', scoringMessage);
+    debugLog('Maker team:', gameState.makerTeam, 'Tricks:', makerTricks);
+    debugLog('New score:', gameState.score);
 
     // Immediately clear all turn indicators since the round is over
     clearTurnIndicators();
@@ -1965,7 +2008,7 @@ function endGame() {
     showMessageMode();
     messageEl.textContent = `Game Over! ${winner} win ${gameState.score[0]}-${gameState.score[1]}!`;
 
-    console.log('Game Over:', winner, 'Final score:', gameState.score);
+    debugLog('Game Over:', winner, 'Final score:', gameState.score);
 
     store.clearGame();
     store.recordGame(isPlayerWin);
@@ -2074,7 +2117,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
 // Show rule violation popup
 function showRulePopup(message) {
     rulePopupMessage.textContent = message;
-    $(rulePopup).fadeIn(200);
+    fadeIn(rulePopup, 200);
 
     // Reset all south hand cards to their base fan position.
     // On mobile, mouseenter fires on tap but mouseleave never fires on touchend,
@@ -2083,7 +2126,7 @@ function showRulePopup(message) {
 
     // Hide popup after 2 seconds
     setTimeout(() => {
-        $(rulePopup).fadeOut(300);
+        fadeOut(rulePopup, 300);
     }, 2000);
 }
 
@@ -2091,17 +2134,16 @@ function showRulePopup(message) {
 function showAIDecision(playerIndex, decision, suit = null) {
     const playerNames = ['You', 'Fucker 1', 'Your Teammate', 'Fucker 2'];
     const playerClasses = ['south-player', 'west-player', 'north-player', 'east-player'];
-    console.log('=== showAIDecision called ===');
-    console.log('Player:', playerIndex, '(' + playerNames[playerIndex] + ')');
-    console.log('Decision:', decision);
-    console.log('Suit:', suit);
-    console.log('Popup currently visible:', $(aiDecisionPopup).is(':visible'));
-    console.trace('Call stack:');
+    debugLog('=== showAIDecision called ===');
+    debugLog('Player:', playerIndex, '(' + playerNames[playerIndex] + ')');
+    debugLog('Decision:', decision);
+    debugLog('Suit:', suit);
 
     // If popup is already visible, hide it first
-    if ($(aiDecisionPopup).is(':visible')) {
-        console.log('Hiding existing popup before showing new one');
-        $(aiDecisionPopup).fadeOut(100);
+    const wasShown = isShown(aiDecisionPopup);
+    if (wasShown) {
+        debugLog('Hiding existing popup before showing new one');
+        fadeOut(aiDecisionPopup, 100);
         // Remove any existing classes
         aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
     }
@@ -2126,27 +2168,27 @@ function showAIDecision(playerIndex, decision, suit = null) {
     // Remove any existing player position classes
     const oldClasses = aiDecisionPopup.className;
     aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
-    console.log('Removed classes:', oldClasses, '→', aiDecisionPopup.className);
+    debugLog('Removed classes:', oldClasses, '→', aiDecisionPopup.className);
 
     // Add the appropriate player position class
     const newClass = playerClasses[playerIndex];
     aiDecisionPopup.classList.add(newClass);
-    console.log('Added class:', newClass, 'for player', playerIndex);
+    debugLog('Added class:', newClass, 'for player', playerIndex);
 
     aiDecisionMessage.textContent = message;
 
     // Small delay to ensure previous popup is hidden if there was one
-    const showDelay = $(aiDecisionPopup).is(':visible') ? 150 : 0;
+    const showDelay = wasShown ? 150 : 0;
     setTimeout(() => {
-        $(aiDecisionPopup).fadeIn(300);
+        fadeIn(aiDecisionPopup, 300);
     }, showDelay);
 
     // Hide popup after 2.5 seconds
     setTimeout(() => {
-        $(aiDecisionPopup).fadeOut(300, function () {
+        fadeOut(aiDecisionPopup, 300, () => {
             // Remove player position class AFTER fadeOut is complete
             aiDecisionPopup.className = aiDecisionPopup.className.replace(/\b(north|south|east|west)-player\b/g, '');
-            console.log('Popup hidden and classes cleared');
+            debugLog('Popup hidden and classes cleared');
         });
     }, 2500); // Increased for better readability
 }
@@ -2154,7 +2196,7 @@ function showAIDecision(playerIndex, decision, suit = null) {
 
 // Show user turn dialog
 function showUserTurnDialog(message, dialogType = 'info') {
-    console.log('showUserTurnDialog called - Current player:', gameState.currentPlayer, 'Message:', message);
+    debugLog('showUserTurnDialog called - Current player:', gameState.currentPlayer, 'Message:', message);
 
     // Only show dialog if it's actually the user's turn
     if (gameState.currentPlayer !== 0) {
@@ -2216,7 +2258,7 @@ function showUserTurnDialog(message, dialogType = 'info') {
         }
     }
 
-    $(userTurnDialog).fadeIn(300);
+    fadeIn(userTurnDialog, 300);
 
     // Keyboard users land on the first thing they can do (card turns focus their hand instead)
     if (dialogType === 'bidding') {
@@ -2230,14 +2272,14 @@ function showUserTurnDialog(message, dialogType = 'info') {
 function hideUserTurnDialog() {
     suitSelection.classList.remove('show');
     dialogActions.classList.remove('show');
-    $(userTurnDialog).fadeOut(300);
+    fadeOut(userTurnDialog, 300);
 }
 
 // Clear all turn indicators
 function clearTurnIndicators() {
     const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
     indicators.forEach(id => {
-        $('#' + id).removeClass('active');
+        document.getElementById(id)?.classList.remove('active');
     });
 }
 
@@ -2247,7 +2289,7 @@ function updateTurnIndicators() {
 
     // Add active class to current player's indicator
     const indicators = ['south-indicator', 'west-indicator', 'north-indicator', 'east-indicator'];
-    $('#' + indicators[gameState.currentPlayer]).addClass('active');
+    document.getElementById(indicators[gameState.currentPlayer])?.classList.add('active');
 }
 
 // Update trick tally marks for a player
@@ -2289,24 +2331,16 @@ function updateDealerBadges() {
 
     // Update dealer badges
     dealerBadges.forEach((id, index) => {
-        const badge = $('#' + id);
-        if (index === gameState.dealer) {
-            badge.addClass('active');
-        } else {
-            badge.removeClass('active');
-        }
+        document.getElementById(id)?.classList.toggle('active', index === gameState.dealer);
     });
 
     // Update maker badges
     makerBadges.forEach((id, index) => {
-        const badge = $('#' + id);
-        if (gameState.makerIndex !== null && index === gameState.makerIndex) {
-            badge.addClass('active');
-
-            badge.text('MAKER');
-        } else {
-            badge.removeClass('active');
-        }
+        const badge = document.getElementById(id);
+        if (!badge) return;
+        const isMaker = gameState.makerIndex !== null && index === gameState.makerIndex;
+        badge.classList.toggle('active', isMaker);
+        if (isMaker) badge.textContent = 'MAKER';
     });
 }
 
@@ -2555,13 +2589,6 @@ function createCardElement(card, index, faceDown = false) {
         cardEl.style.zIndex = 10 + index;
     }
 
-    // Attempt to update the fan dynamically if playerHandEl is accessible
-    setTimeout(() => {
-        if (typeof updateSouthHandFan === 'function') {
-            updateSouthHandFan();
-        }
-    }, 10);
-
     return cardEl;
 }
 
@@ -2741,9 +2768,7 @@ function flipTopCardOfDeck(card) {
 // Render the trump card
 function renderTrumpCard(card) {
     if (!card) {
-        $(trumpCardEl).fadeOut(300, function () {
-            $(this).empty();
-        });
+        fadeOut(trumpCardEl, 300, () => trumpCardEl.replaceChildren());
         return;
     }
 
@@ -2752,7 +2777,7 @@ function renderTrumpCard(card) {
     trumpCardEl.appendChild(cardEl);
 
     // Animate the trump card appearance
-    $(cardEl).hide().fadeIn(500);
+    fadeIn(cardEl, 500);
 }
 
 // Animate a card from its current position to the center of the table
@@ -2887,7 +2912,7 @@ function hideTrumpCandidate() {
     if (centerDeck) {
         const trumpCandidateCard = centerDeck.querySelector('.trump-candidate-card');
         if (trumpCandidateCard) {
-            $(trumpCandidateCard).fadeOut(300, function () {
+            fadeOut(trumpCandidateCard, 300, () => {
                 trumpCandidateCard.remove();
             });
         }
@@ -2899,7 +2924,7 @@ function hideTrumpCandidate() {
 function hideDeckInCenter() {
     const centerDeck = document.getElementById('center-deck');
     if (centerDeck) {
-        $(centerDeck).fadeOut(300, function () {
+        fadeOut(centerDeck, 300, () => {
             centerDeck.remove();
         });
     }
@@ -3003,7 +3028,7 @@ function animateCardFromCenter(card, playerIndex, dealIndex) {
         }, 700);
     } else {
         // Fallback if no deck cards available
-        console.log('No deck cards available for animation');
+        debugLog('No deck cards available for animation');
     }
 }
 
@@ -3054,7 +3079,7 @@ function handleCardClick(event) {
     // GUARD: prevent double-click race condition where a second click fires before
     // the first card's animation completes and disableCardSelection() takes effect
     if (gameState.isProcessingTurn) {
-        console.log('Player clicked while turn already processing — ignoring');
+        debugLog('Player clicked while turn already processing — ignoring');
         return;
     }
 
@@ -3379,8 +3404,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 gameState.fastForward = true;
                 document.body.classList.add('fast-forward');
                 const glitchVideo = document.getElementById('glitch-overlay');
-                if (glitchVideo) glitchVideo.play().catch(e => console.log('Video autoplay prevented', e));
-                console.log("Fast-forward enabled");
+                if (glitchVideo) glitchVideo.play().catch(e => debugLog('Video autoplay prevented', e));
+                debugLog("Fast-forward enabled");
             }, 200);
         };
 
@@ -3394,7 +3419,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.remove('fast-forward');
                 const glitchVideo = document.getElementById('glitch-overlay');
                 if (glitchVideo) glitchVideo.pause();
-                console.log("Fast-forward disabled");
+                debugLog("Fast-forward disabled");
             }
         };
 
