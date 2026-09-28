@@ -48,9 +48,26 @@ window.setTimeout = function(callback, delay, ...args) {
     return originalSetTimeout(callback, delay * multiplier, ...args);
 };
 
-// Card suits and values
-const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
-const VALUES = ['9', '10', 'J', 'Q', 'K', 'A'];
+// Pure Euchre rules live in rules.js (loaded before this file) so they can be unit tested.
+const {
+    SUITS,
+    createDeck,
+    getNextSuit,
+    getCrossSuits,
+    getEffectiveSuit,
+    isCardTrump,
+    getEuchreCardValue,
+    isCardHigher,
+    canPlayCard,
+    getTrickWinner,
+    getPartnerIndex,
+    teamOf,
+    scoreHand,
+    getGameWinner,
+    evaluateHandStrength,
+    getCardName
+} = window.EuchreRules;
+
 const SUIT_SYMBOLS = {
     'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
     'diamonds': '<img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" />',
@@ -213,26 +230,6 @@ function initGame() {
     // Bidding will start after trump candidate is shown (handled in showTrumpCandidate)
     // Cards take 20 * 200ms = 4000ms to deal, plus extra time for trump candidate
     // setTimeout(startBidding, 5000); // REMOVED - duplicate call
-}
-
-// Create a standard deck of 24 cards (9-Ace of each suit)
-function createDeck() {
-    const deck = [];
-    for (const suit of SUITS) {
-        for (const value of VALUES) {
-            deck.push({ suit, value });
-        }
-    }
-    return shuffleDeck(deck);
-}
-
-// Shuffle the deck using Fisher-Yates algorithm
-function shuffleDeck(deck) {
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    return deck;
 }
 
 // Deal cards to all players with animation in Euchre style (3-2-3-2)
@@ -1036,12 +1033,6 @@ function computerDiscard() {
     finishDiscardPhase();
 }
 
-// Helper function to get card value for comparison
-function getCardValue(card) {
-    const values = { '9': 1, '10': 2, 'J': 3, 'Q': 4, 'K': 5, 'A': 6 };
-    return values[card.value] || 0;
-}
-
 // Enable card selection for discarding
 function enableCardSelectionForDiscard() {
     const playerCards = playerHandEl.querySelectorAll('.card');
@@ -1733,80 +1724,6 @@ function playCard(card, playerIndex) {
     }
 }
 
-// Compare two cards to see if card1 beats card2 in Euchre
-function isCardHigher(card1, card2, trumpSuit, leadSuit) {
-    const card1IsTrump = isCardTrump(card1, trumpSuit);
-    const card2IsTrump = isCardTrump(card2, trumpSuit);
-
-    // Trump beats non-trump
-    if (card1IsTrump && !card2IsTrump) return true;
-    if (!card1IsTrump && card2IsTrump) return false;
-
-    // Both trump — compare trump values (bowers > A > K > Q > 10 > 9)
-    if (card1IsTrump && card2IsTrump) {
-        return getEuchreCardValue(card1, trumpSuit) > getEuchreCardValue(card2, trumpSuit);
-    }
-
-    // Neither is trump — lead suit beats off-suit
-    const card1EffSuit = getEffectiveSuit(card1, trumpSuit);
-    const card2EffSuit = getEffectiveSuit(card2, trumpSuit);
-    const card1IsLead = card1EffSuit === leadSuit;
-    const card2IsLead = card2EffSuit === leadSuit;
-
-    if (card1IsLead && !card2IsLead) return true;
-    if (!card1IsLead && card2IsLead) return false;
-
-    // Same category — higher value wins
-    return getEuchreCardValue(card1, trumpSuit) > getEuchreCardValue(card2, trumpSuit);
-}
-
-// Get the Euchre value of a card (higher = better)
-function getEuchreCardValue(card, trumpSuit) {
-    if (!card) return 0;
-
-    // Right bower (Jack of trump suit) - highest
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return 100;
-    }
-
-    // Left bower (Jack of same color as trump) - second highest
-    const trumpColor = (trumpSuit === 'hearts' || trumpSuit === 'diamonds') ? 'red' : 'black';
-    const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
-    if (card.value === 'J' && cardColor === trumpColor && card.suit !== trumpSuit) {
-        return 99;
-    }
-
-    // Other trump cards
-    if (card.suit === trumpSuit) {
-        const trumpValues = { 'A': 98, 'K': 97, 'Q': 96, '10': 95, '9': 94 };
-        return trumpValues[card.value] || 0;
-    }
-
-    // Non-trump cards
-    const regularValues = { 'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, '9': 9 };
-    return regularValues[card.value] || 0;
-}
-
-// Check if a card is trump (including bowers)
-function isCardTrump(card, trumpSuit) {
-    if (!card || !trumpSuit) return false;
-
-    // Right bower
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return true;
-    }
-
-    // Left bower
-    const trumpColor = (trumpSuit === 'hearts' || trumpSuit === 'diamonds') ? 'red' : 'black';
-    const cardColor = (card.suit === 'hearts' || card.suit === 'diamonds') ? 'red' : 'black';
-    if (card.value === 'J' && cardColor === trumpColor && card.suit !== trumpSuit) {
-        return true;
-    }
-
-    // Regular trump
-    return card.suit === trumpSuit;
-}
-
 // Determine the winner of the current trick
 function determineTrickWinner() {
     // GUARD: prevent double-fire (can happen with overlapping timeouts)
@@ -1826,26 +1743,13 @@ function determineTrickWinner() {
         }
     }
 
-    let winnerIndex = 0;
-    let winningCard = gameState.currentTrick[0];
-
-    // Evaluate each card in the trick
-    for (let i = 1; i < gameState.currentTrick.length; i++) {
-        const currentCard = gameState.currentTrick[i];
-
-        if (isCardHigher(currentCard.card, winningCard.card, gameState.trumpSuit, gameState.leadSuit)) {
-            winnerIndex = i;
-            winningCard = currentCard;
-        }
-    }
-
-    // The winner index corresponds to the player who played the winning card
+    const winningCard = getTrickWinner(gameState.currentTrick, gameState.trumpSuit);
     const actualWinnerIndex = winningCard.player;
     gameState.trickWinner = actualWinnerIndex;
     gameState.currentPlayer = actualWinnerIndex;
 
     // Track tricks won this hand (not game score yet)
-    const winningTeam = (actualWinnerIndex === 0 || actualWinnerIndex === 2) ? 0 : 1;
+    const winningTeam = teamOf(actualWinnerIndex);
     if (winningTeam === 0) {
         gameState.tricksThisHand.team0++;
     } else {
@@ -1963,37 +1867,22 @@ function endHand() {
     gameState.gamePhase = 'hand_complete';
 
     const makerTricks = gameState.makerTeam === 0 ? gameState.tricksThisHand.team0 : gameState.tricksThisHand.team1;
-    const defenderTricks = gameState.makerTeam === 0 ? gameState.tricksThisHand.team1 : gameState.tricksThisHand.team0;
-
-    let pointsAwarded = 0;
-    let scoringTeam = null;
-    let scoringMessage = '';
 
     const teamNames = ['You and Your Teammate', 'Fucker 2 and Fucker 1'];
     const makerTeamName = teamNames[gameState.makerTeam];
     const defenderTeamName = teamNames[1 - gameState.makerTeam];
 
-    // Euchre scoring rules
-    if (makerTricks >= 3) {
-        // Makers won
-        scoringTeam = gameState.makerTeam;
-        if (makerTricks === 5) {
-            // March (all 5 tricks)
-            pointsAwarded = gameState.makerIsAlone ? 4 : 2;
-            scoringMessage = gameState.makerIsAlone ?
-                `${makerTeamName} march alone! +4 points` :
-                `${makerTeamName} march! +2 points`;
-        } else {
-            // 3 or 4 tricks
-            pointsAwarded = 1;
-            scoringMessage = `${makerTeamName} make it! +1 point`;
-        }
-    } else {
-        // Defenders won (euchre)
-        scoringTeam = 1 - gameState.makerTeam;
-        pointsAwarded = 2;
-        scoringMessage = `${defenderTeamName} euchred ${makerTeamName}! +2 points`;
-    }
+    const { scoringTeam, points: pointsAwarded, outcome } = scoreHand({
+        makerTeam: gameState.makerTeam,
+        makerTricks,
+        alone: gameState.makerIsAlone
+    });
+    const scoringMessage = {
+        loner_march: `${makerTeamName} march alone! +4 points`,
+        march: `${makerTeamName} march! +2 points`,
+        made: `${makerTeamName} make it! +1 point`,
+        euchre: `${defenderTeamName} euchred ${makerTeamName}! +2 points`
+    }[outcome];
 
     // Update game score
     gameState.score[scoringTeam] += pointsAwarded;
@@ -2011,7 +1900,7 @@ function endHand() {
     messageEl.textContent = scoringMessage;
     updateUI(); // Update score display
 
-    const isGameOver = gameState.score[0] >= gameState.settings.winningScore || gameState.score[1] >= gameState.settings.winningScore;
+    const isGameOver = getGameWinner(gameState.score, gameState.settings.winningScore) !== null;
 
     if (scoringTeam === 1 - gameState.makerTeam) {
         // Trigger visual "Euchred" overlay, passing whether game is over
@@ -2032,7 +1921,7 @@ function endHand() {
 // End the game (someone reached the winning score)
 function endGame() {
     let winner;
-    let isPlayerWin = gameState.score[0] >= gameState.settings.winningScore;
+    const isPlayerWin = getGameWinner(gameState.score, gameState.settings.winningScore) === 0;
     if (isPlayerWin) {
         winner = 'You and Your Teammate';
     } else {
@@ -2081,25 +1970,6 @@ function showGameWonOverlay(isPlayerWin) {
     }
 
     overlay.classList.add('active');
-}
-
-// Helper function to get the name of a card
-function getCardName(card) {
-    if (!card) {
-        console.error('getCardName called with null card');
-        return 'Unknown Card';
-    }
-
-    // Map card values to full names
-    const valueNames = {
-        'J': 'Jack',
-        'Q': 'Queen',
-        'K': 'King',
-        'A': 'Ace'
-    };
-
-    const displayValue = valueNames[card.value] || card.value;
-    return `${displayValue} of ${card.suit}`;
 }
 
 // Show the Euchred overlay effect
@@ -2158,77 +2028,6 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
     }
 
     overlay.classList.add('active');
-}
-
-// Helper function to check if a card is a bower
-function isBower(card, trumpSuit) {
-    if (!card || !trumpSuit) return false;
-    return (card.value === 'J' && (card.suit === trumpSuit || getSuitOfLeftBower(card) === trumpSuit));
-}
-
-// Helper function to get partner index
-function getPartnerIndex(playerIndex) {
-    // Partners are across from each other: 0-2 (You-Teammate), 1-3 (Fucker1-Fucker2)
-    switch (playerIndex) {
-        case 0: return 2; // Your partner is Teammate
-        case 1: return 3; // Fucker 1's partner is Fucker 2
-        case 2: return 0; // Teammate's partner is You
-        case 3: return 1; // Fucker 2's partner is Fucker 1
-        default: return -1;
-    }
-}
-
-// Helper function to get the suit of the left bower
-function getSuitOfLeftBower(card) {
-    if (!card || card.value !== 'J') return null;
-
-    switch (card.suit) {
-        case 'hearts': return 'diamonds';
-        case 'diamonds': return 'hearts';
-        case 'clubs': return 'spades';
-        case 'spades': return 'clubs';
-        default: return null;
-    }
-}
-
-// Helper function to get the effective suit of a card (considering trump and bowers)
-function getEffectiveSuit(card, trumpSuit) {
-    if (!card) return null;
-    if (!trumpSuit) return card.suit;
-
-    // Right bower (Jack of trump suit) is trump
-    if (card.value === 'J' && card.suit === trumpSuit) {
-        return trumpSuit;
-    }
-
-    // Left bower (Jack of same color as trump) is also trump
-    if (card.value === 'J' && getSuitOfLeftBower(card) === trumpSuit) {
-        return trumpSuit;
-    }
-
-    // All other cards are their natural suit
-    return card.suit;
-}
-
-// Helper function to check if player can play a specific card
-function canPlayCard(card, playerHand, leadSuit, trumpSuit) {
-    // If no lead suit yet, any card can be played
-    if (!leadSuit) return true;
-
-    const cardEffectiveSuit = getEffectiveSuit(card, trumpSuit);
-
-    // Check if player has any cards of the lead suit
-    const hasLeadSuit = playerHand.some(handCard =>
-        getEffectiveSuit(handCard, trumpSuit) === leadSuit
-    );
-
-    // If player has cards of the lead suit, they must play one
-    if (hasLeadSuit) {
-        return cardEffectiveSuit === leadSuit;
-    }
-
-    // If player doesn't have the lead suit, they can play any card
-    return true;
 }
 
 // Show rule violation popup
@@ -2311,105 +2110,6 @@ function showAIDecision(playerIndex, decision, suit = null) {
     }, 2500); // Increased for better readability
 }
 // --- AI STRATEGY HELPERS ---
-
-/**
- * Evaluates the strength of a hand for a potential trump suit.
- * Returns a score where higher is better.
- * Points:
- * - Right Bower: 4 points
- * - Left Bower: 4 points
- * - Ace of Trump: 3 points
- * - King of Trump: 2.5 points
- * - Queen of Trump: 2 points
- * - 10 of Trump: 1.5 points
- * - 9 of Trump: 1 point
- * - Off-suit Ace: 1 point
- * - Singleton (with trump): 1 point
- * - Void (with trump): 1.5 points
- */
-function evaluateHandStrength(hand, trumpSuit) {
-    let score = 0;
-    let hasTrump = false;
-    let trumpCount = 0;
-    let hasRightBower = false;
-    let hasLeftBower = false;
-    let suitCounts = { hearts: 0, diamonds: 0, clubs: 0, spades: 0 };
-
-    hand.forEach(card => {
-        const effectiveSuit = getEffectiveSuit(card, trumpSuit);
-        suitCounts[effectiveSuit]++;
-
-        if (effectiveSuit === trumpSuit) {
-            hasTrump = true;
-            trumpCount++;
-            // Differentiate Right vs Left bower
-            if (card.value === 'J' && card.suit === trumpSuit) {
-                score += 5; // Right bower — the best card in the game
-                hasRightBower = true;
-            } else if (card.value === 'J') {
-                score += 4.5; // Left bower — second best
-                hasLeftBower = true;
-            } else if (card.value === 'A') {
-                score += 3.5;
-            } else if (card.value === 'K') {
-                score += 2.5;
-            } else if (card.value === 'Q') {
-                score += 2;
-            } else if (card.value === '10') {
-                score += 1.5;
-            } else if (card.value === '9') {
-                score += 0.5; // 9 of trump is nearly worthless
-            }
-        } else if (card.value === 'A') {
-            score += 2; // Off-suit Ace is a likely trick winner (increased from 1)
-        } else if (card.value === 'K') {
-            score += 0.5; // Off-suit King has some value
-        }
-    });
-
-    // Bonuses for distribution (only if we have trump to make it useful)
-    if (hasTrump) {
-        Object.keys(suitCounts).forEach(suit => {
-            if (suit !== trumpSuit) {
-                if (suitCounts[suit] === 0) score += 2; // Void — very powerful (can trump in)
-                else if (suitCounts[suit] === 1) score += 1; // Singleton — can create void next trick
-            }
-        });
-    }
-
-    // Trump count bonus — having 3+ trump is very strong
-    if (trumpCount >= 3) score += 1.5;
-    if (trumpCount >= 4) score += 2;
-
-    // Both bowers is extremely strong
-    if (hasRightBower && hasLeftBower) score += 2;
-
-    return score;
-}
-
-/**
- * Returns the "Next" suit (same color) for a given suit.
- */
-function getNextSuit(suit) {
-    const nextMap = {
-        'hearts': 'diamonds',
-        'diamonds': 'hearts',
-        'clubs': 'spades',
-        'spades': 'clubs'
-    };
-    return nextMap[suit];
-}
-
-/**
- * Returns the "Cross" suits (opposite color) for a given suit.
- */
-function getCrossSuits(suit) {
-    if (suit === 'hearts' || suit === 'diamonds') {
-        return ['clubs', 'spades'];
-    } else {
-        return ['hearts', 'diamonds'];
-    }
-}
 
 // Show user turn dialog
 function showUserTurnDialog(message, dialogType = 'info') {
