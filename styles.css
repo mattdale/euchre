@@ -1668,19 +1668,18 @@ body.beginner-mode .card.is-trump:hover {
     color: var(--color-text-dark);
 }
 
-/* Trump pickup card styling */
+/* Trump pickup card styling. Its placement beside the fan is set inline by
+   updateSouthHandFan(); hover lifts it with `translate` so it never fights
+   that inline transform. */
 .card.trump-pickup {
     border: 3px solid var(--color-yellow);
     box-shadow: 0 0 15px var(--color-yellow-alpha-60);
-    position: absolute !important;
-    left: 100%;
-    margin-left: 6rem;
-    transform: rotate(15deg) translateY(-1rem);
     z-index: 100;
+    transition: translate 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card.trump-pickup:hover {
-    transform: rotate(15deg) translateY(-2rem) scale(1.05) !important;
+    translate: 0 -0.75rem;
     box-shadow: 0 0 20px var(--color-yellow-alpha-80);
 }
 

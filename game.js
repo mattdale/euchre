@@ -829,23 +829,11 @@ function orderUp(suit, goingAlone = false) {
                 debugLog('Player hand after trump pickup:', gameState.playerHand.length);
 
                 // DON'T re-render the hand — existing cards are already positioned correctly.
-                // Just append the trump pickup card directly as an offset floating card,
-                // leaving the 5-card fan completely untouched.
+                // Append the picked-up card; updateSouthHandFan() places it beside the fan
+                // (hover lift comes from CSS, so there are no per-card listeners here).
                 const trumpCardIndex = gameState.playerHand.length - 1;
                 const trumpEl = createCardElement(topCard, trumpCardIndex, false);
-                const baseT = 'rotate(15deg)';
-                trumpEl.style.transform = baseT;
-                trumpEl.style.setProperty('--fan-rotation', '15deg');
-                trumpEl.style.bottom = '-1rem';
-                trumpEl.style.right = '-3rem';
-                trumpEl.style.left = 'auto';
-                trumpEl.style.marginLeft = '0';
-                trumpEl.addEventListener('mouseenter', () => {
-                    trumpEl.style.transform = `${baseT} translateY(-1.4rem)`;
-                });
-                trumpEl.addEventListener('mouseleave', () => {
-                    trumpEl.style.transform = baseT;
-                });
+                trumpEl.style.transform = 'rotate(12deg)';
                 playerHandEl.appendChild(trumpEl);
                 // Settle it into the fan's 6th-card slot on the next tick (so it transitions in)
                 setTimeout(updateSouthHandFan, 10);
@@ -2403,10 +2391,13 @@ function updateSouthHandFan() {
 
     const isMobile = window.innerWidth <= 480;
     const spreadAngle = 24; // degrees between each card on desktop
-    const spreadMobileRem = 3; // rem distance between stacked cards on mobile
-    
-    // Use Math.min(count, 5) so the fan doesn't shift left and clip when holding 6 cards (trump candidate phase)
-    const centerMathCount = Math.min(count, 5);
+    // rem distance between stacked cards on mobile; tightened when a 6th card
+    // joins the row so all six stay on screen on narrow phones (≈360px).
+    const spreadMobileRem = count > 5 ? 2.75 : 3;
+
+    // Desktop: the 6th (picked-up) card sits beside the fan, so centre on 5.
+    // Mobile: it joins the row, so centre on the real count.
+    const centerMathCount = isMobile ? count : Math.min(count, 5);
     
     cards.forEach((card, i) => {
         let rotation = 0;
@@ -2418,20 +2409,21 @@ function updateSouthHandFan() {
         card.style.transformOrigin = 'bottom center';
 
         if (i === 5) {
-            // Trump candidate (6th card): peek from bottom-right.
+            // Picked-up trump card (6th card), highlighted until the discard.
             // Use transform-origin:center center so translate values are predictable —
             // bottom-center origin + translateY pushed the card below the overflow boundary.
             card.style.transformOrigin = 'center center';
 
             if (isMobile) {
-                // On mobile: nudge right and UP slightly so it stays inside viewport.
-                // translateX shifts right; negative translateY lifts it above the clipping edge.
-                baseTransform = 'translateX(2.8rem) translateY(-0.5rem) rotate(15deg)';
+                // Last card in the row, raised so it reads as the new one.
+                const offset = (i - (centerMathCount - 1) / 2) * spreadMobileRem;
+                baseTransform = `translateX(${offset}rem) translateY(-0.75rem)`;
             } else {
-                baseTransform = 'translateX(8.5rem) translateY(-0.5rem) rotate(15deg)';
+                // Just right of the fan, tilted, fully on screen.
+                baseTransform = 'translateX(8.5rem) translateY(-0.5rem) rotate(12deg)';
             }
             card.style.transform = baseTransform;
-            card.style.setProperty('--fan-rotation', '15deg');
+            card.style.setProperty('--fan-rotation', isMobile ? '0deg' : '12deg');
             // No hover handlers for the trump candidate
             card._hoverEnter = null;
             card._hoverLeave = null;
