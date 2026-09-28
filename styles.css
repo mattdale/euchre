@@ -2784,3 +2784,47 @@ body.fast-forward .glitch-overlay {
 .text-btn[data-confirm="true"] {
     font-weight: 700;
 }
+
+/* ═══ Accessibility ═══ */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Visible focus for keyboard users only */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible + .slider,
+.suit-card:focus-visible {
+    outline: 3px solid var(--color-yellow);
+    outline-offset: 3px;
+}
+
+/* Hand cards lift like hover when focused; `translate` composes with the inline fan transform */
+#player-hand .card:focus-visible {
+    outline: 3px solid var(--color-yellow);
+    outline-offset: 2px;
+    translate: 0 -1.4rem;
+    z-index: 50 !important; /* beat the inline fan stacking so the whole card shows */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .glitch-overlay {
+        display: none !important;
+    }
+}

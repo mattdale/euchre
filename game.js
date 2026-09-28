@@ -71,6 +71,10 @@ const {
 // Settings, the game in progress and lifetime stats persist in localStorage (see storage.js).
 const store = window.EuchreStorage.createStore();
 
+// Honor the OS "reduce motion" setting for jQuery fades too (CSS transitions are handled in styles.css)
+const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+if (prefersReducedMotion && window.jQuery) jQuery.fx.off = true;
+
 const SUIT_SYMBOLS = {
     'hearts': '<img src="img/suitHeart.svg" class="suit-icon" alt="Hearts" />',
     'diamonds': '<img src="img/suitDiamond.svg" class="suit-icon" alt="Diamonds" />',
@@ -121,6 +125,8 @@ function showMessageMode() {
     // No-op - tally crowns stay visible until reset
 }
 
+const trickCountLabel = n => `${n} ${n === 1 ? 'trick' : 'tricks'} this hand`;
+
 // Re-render the crown marks for each team based on current tricksThisHand
 function updateTrickTallyDisplay() {
     if (!team1TallyCrowns || !team2TallyCrowns) return;
@@ -134,6 +140,9 @@ function updateTrickTallyDisplay() {
             crown.classList.remove('won');
         }
     });
+
+    team1TallyCrowns.setAttribute('aria-label', trickCountLabel(gameState.tricksThisHand.team0));
+    team2TallyCrowns.setAttribute('aria-label', trickCountLabel(gameState.tricksThisHand.team1));
 
     // Update team 2 crowns
     const t2Crowns = team2TallyCrowns.querySelectorAll('.tally-crown');
@@ -686,6 +695,8 @@ function showTrumpArea() {
         });
         trumpCornerIcons.style.display = 'block';
     }
+    const trumpStatus = document.getElementById('trump-status');
+    if (trumpStatus && gameState.trumpSuit) trumpStatus.textContent = `Trump: ${gameState.trumpSuit}`;
 }
 
 // Hide the trump corner icons
@@ -694,6 +705,8 @@ function hideTrumpArea() {
     if (trumpCornerIcons) {
         trumpCornerIcons.style.display = 'none';
     }
+    const trumpStatus = document.getElementById('trump-status');
+    if (trumpStatus) trumpStatus.textContent = '';
 }
 
 // Player orders up the top card
@@ -1049,7 +1062,9 @@ function enableCardSelectionForDiscard() {
     playerCards.forEach(card => {
         card.style.cursor = 'pointer';
         card.addEventListener('click', handleDiscardClick);
+        makeCardSelectable(card, true, 'discard');
     });
+    focusFirstSelectableCard();
 }
 
 // Handle discard card click
@@ -1091,6 +1106,7 @@ function disableCardSelectionForDiscard() {
     playerCards.forEach(card => {
         card.style.cursor = 'default';
         card.removeEventListener('click', handleDiscardClick);
+        makeCardUnselectable(card);
     });
 }
 
@@ -1980,6 +1996,7 @@ function showGameWonOverlay(isPlayerWin) {
     }
 
     overlay.innerHTML += `<button id="game-won-continue-btn" class="dialog-btn">Play again</button>`;
+    overlay.querySelector('h1').id = 'game-won-title';
 
     // Add event listener to the button
     const btn = overlay.querySelector('#game-won-continue-btn');
@@ -1991,6 +2008,7 @@ function showGameWonOverlay(isPlayerWin) {
     }
 
     overlay.classList.add('active');
+    btn?.focus({ preventScroll: true });
 }
 
 // Show the Euchred overlay effect
@@ -2031,6 +2049,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
         overlay.innerHTML = `<h1>Sheeeit...</h1>${gifHtml}<p>They euchred you...</p>`;
     }
 
+    overlay.querySelector('h1').id = 'euchred-title';
     const btnText = isGameOver ? 'Continue' : 'Start Next Round';
     overlay.innerHTML += `<button id="euchred-continue-btn" class="dialog-btn">${btnText}</button>`;
 
@@ -2049,6 +2068,7 @@ function showEuchredOverlay(scoringTeam, isGameOver = false) {
     }
 
     overlay.classList.add('active');
+    btn?.focus({ preventScroll: true });
 }
 
 // Show rule violation popup
@@ -2170,9 +2190,13 @@ function showUserTurnDialog(message, dialogType = 'info') {
                 card.style.opacity = '0.3';
                 card.style.pointerEvents = 'none';
                 card.title = 'Can\'t call this suit (was turned down)';
+                card.setAttribute('aria-disabled', 'true');
+                card.tabIndex = -1;
             } else {
                 card.style.opacity = '1';
                 card.style.pointerEvents = 'auto';
+                card.removeAttribute('aria-disabled');
+                card.tabIndex = 0;
                 if (dialogType === 'suit_selection_forced') {
                     card.title = `Forced to call ${suit} (Stick the Dealer)`;
                 } else {
@@ -2193,6 +2217,13 @@ function showUserTurnDialog(message, dialogType = 'info') {
     }
 
     $(userTurnDialog).fadeIn(300);
+
+    // Keyboard users land on the first thing they can do (card turns focus their hand instead)
+    if (dialogType === 'bidding') {
+        focusIfKeyboard(dialogOrderUp);
+    } else if (dialogType === 'suit_selection' || dialogType === 'suit_selection_forced') {
+        focusIfKeyboard(suitSelection.querySelector('.suit-card[tabindex="0"]'));
+    }
 }
 
 // Hide user turn dialog
@@ -2514,6 +2545,10 @@ function createCardElement(card, index, faceDown = false) {
     cardEl.appendChild(suitEl);
     cardEl.appendChild(valueElBottom);
     cardEl.appendChild(suitElBottom);
+
+    // Read as one image ("Jack of hearts, trump") rather than as its corner glyphs
+    cardEl.setAttribute('role', 'img');
+    cardEl.setAttribute('aria-label', cardAccessibleName(card));
 
     // Explicitly set base z-index to avoid stacking jumps during deal
     if (index !== undefined) {
@@ -2994,7 +3029,11 @@ function enableCardSelection() {
     playerCards.forEach(card => {
         card.style.cursor = 'pointer';
         card.addEventListener('click', handleCardClick);
+        const handCard = gameState.playerHand[parseInt(card.dataset.index, 10)];
+        const legal = !!handCard && canPlayCard(handCard, gameState.playerHand, gameState.leadSuit, gameState.trumpSuit);
+        makeCardSelectable(card, legal, 'play');
     });
+    focusFirstSelectableCard();
 }
 
 // Disable card selection
@@ -3004,6 +3043,7 @@ function disableCardSelection() {
     playerCards.forEach(card => {
         card.style.cursor = 'default';
         card.removeEventListener('click', handleCardClick);
+        makeCardUnselectable(card);
     });
 }
 
@@ -3062,6 +3102,122 @@ function handleCardClick(event) {
 
     // Play the card
     playCard(card, 0);
+}
+
+// ─── Keyboard and screen reader support ─────────────────────────────────
+
+// Auto-focus only follows keyboard users; pointer users keep their scroll position and zoom.
+let usingKeyboard = false;
+window.addEventListener('keydown', e => {
+    if (!e.metaKey && !e.ctrlKey && !e.altKey) usingKeyboard = true;
+}, true);
+window.addEventListener('pointerdown', () => { usingKeyboard = false; }, true);
+
+function focusIfKeyboard(el) {
+    if (usingKeyboard && el) el.focus({ preventScroll: true });
+}
+
+function cardAccessibleName(card) {
+    const name = getCardName(card);
+    return gameState.trumpSuit && isCardTrump(card, gameState.trumpSuit) ? `${name}, trump` : name;
+}
+
+// Turn a card in your hand into a button. Illegal plays stay reachable (so the whole
+// hand can be heard) but are marked disabled. Uses a roving tabindex: one tab stop per hand.
+function makeCardSelectable(cardEl, enabled, action) {
+    const card = gameState.playerHand[parseInt(cardEl.dataset.index, 10)];
+    if (!card) return;
+    const verb = action === 'discard' ? 'Discard' : 'Play';
+    cardEl.setAttribute('role', 'button');
+    cardEl.setAttribute('aria-disabled', String(!enabled));
+    cardEl.setAttribute('aria-label', `${verb} ${cardAccessibleName(card)}${enabled ? '' : ', must follow suit'}`);
+    cardEl.tabIndex = -1;
+}
+
+function makeCardUnselectable(cardEl) {
+    const card = gameState.playerHand[parseInt(cardEl.dataset.index, 10)];
+    cardEl.setAttribute('role', 'img');
+    cardEl.removeAttribute('aria-disabled');
+    cardEl.removeAttribute('tabindex');
+    if (card) cardEl.setAttribute('aria-label', cardAccessibleName(card));
+}
+
+function selectableHandCards() {
+    return [...playerHandEl.querySelectorAll('.card[role="button"]')];
+}
+
+function moveHandFocus(target) {
+    selectableHandCards().forEach(c => { c.tabIndex = c === target ? 0 : -1; });
+    target.focus({ preventScroll: true });
+}
+
+function focusFirstSelectableCard() {
+    const cards = selectableHandCards();
+    const target = cards.find(c => c.getAttribute('aria-disabled') !== 'true') || cards[0];
+    if (!target) return;
+    target.tabIndex = 0;
+    focusIfKeyboard(target);
+}
+
+// Arrow keys move between cards, Enter or Space plays the focused one
+playerHandEl.addEventListener('keydown', e => {
+    const cards = selectableHandCards();
+    const i = cards.indexOf(document.activeElement);
+    if (i === -1) return;
+    const moves = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: cards.length - 1 };
+    if (e.key in moves) {
+        e.preventDefault();
+        moveHandFocus(cards[(moves[e.key] + cards.length) % cards.length]);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        cards[i].click();
+    }
+});
+
+// Number keys 1-6 play or discard that card, counting from the left
+document.addEventListener('keydown', e => {
+    if (!/^[1-6]$/.test(e.key) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest('input, select, textarea, .settings-modal, .go-alone-modal-overlay')) return;
+    const card = selectableHandCards()[Number(e.key) - 1];
+    if (card) {
+        e.preventDefault();
+        card.click();
+    }
+});
+
+// Suit choices are divs styled as cards: give them button keyboard behavior
+suitSelection.addEventListener('keydown', e => {
+    const suitCard = e.target.closest('.suit-card');
+    if (!suitCard || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    if (suitCard.getAttribute('aria-disabled') !== 'true') suitCard.click();
+});
+
+// Keep Tab inside an open modal; Escape runs onEscape if given. Returns a release function.
+function trapFocus(container, onEscape) {
+    const focusable = () => [...container.querySelectorAll('button, select, input, [tabindex]:not([tabindex="-1"])')]
+        .filter(el => !el.disabled && el.getClientRects().length > 0);
+    const handler = e => {
+        if (e.key === 'Escape' && onEscape) {
+            e.preventDefault();
+            onEscape();
+            return;
+        }
+        if (e.key !== 'Tab') return;
+        const items = focusable();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    };
+    container.addEventListener('keydown', handler);
+    return () => container.removeEventListener('keydown', handler);
 }
 
 // Fill the "Your record" panel in the settings modal
@@ -3262,8 +3418,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnGoAloneConfirm = document.getElementById('btn-go-alone-confirm');
     let pendingTrumpSuit = null;
 
+    let releaseGoAloneTrap = null;
+
     const hideGoAloneModal = () => {
         if (!goAloneModal) return;
+        releaseGoAloneTrap?.();
+        releaseGoAloneTrap = null;
         goAloneModal.style.opacity = '0';
         goAloneModal.style.transform = 'scale(0.95)';
         setTimeout(() => {
@@ -3281,6 +3441,8 @@ window.addEventListener('DOMContentLoaded', () => {
         void goAloneModal.offsetWidth;
         goAloneModal.style.opacity = '1';
         goAloneModal.style.transform = 'scale(1)';
+        releaseGoAloneTrap = trapFocus(goAloneModal);
+        btnPlayTeammate?.focus({ preventScroll: true });
     };
 
     // Suit card click handlers
@@ -3345,6 +3507,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (settingsBtn && settingsModal && closeSettingsBtn) {
+        let releaseSettingsTrap = null;
+
+        const closeSettingsModal = () => {
+            settingsModal.style.display = 'none';
+            settingsModal.classList.remove('active');
+            releaseSettingsTrap?.();
+            releaseSettingsTrap = null;
+            settingsBtn.focus({ preventScroll: true });
+        };
+
         settingsBtn.addEventListener('click', () => {
             if (window.cancelFastForward) window.cancelFastForward();
             // Apply current settings
@@ -3358,6 +3530,10 @@ window.addEventListener('DOMContentLoaded', () => {
             if (settingBeginnerMode) settingBeginnerMode.checked = gameState.settings.beginnerMode;
             renderStats(store.loadStats());
             settingsModal.style.display = 'block';
+            settingsModal.classList.add('active');
+            // Escape closes without saving, same as the X button
+            releaseSettingsTrap = trapFocus(settingsModal, closeSettingsModal);
+            settingWinningScore.focus({ preventScroll: true });
         });
 
         closeSettingsBtn.addEventListener('click', () => {
@@ -3371,7 +3547,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
             }
             store.saveSettings(gameState.settings);
-            settingsModal.style.display = 'none';
+            closeSettingsModal();
         });
 
         // Reset record: two-step so a stray tap can't wipe it
@@ -3398,9 +3574,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // X button — closes without saving
         const modalCloseXBtn = document.getElementById('modal-close-x-btn');
         if (modalCloseXBtn) {
-            modalCloseXBtn.addEventListener('click', () => {
-                settingsModal.style.display = 'none';
-            });
+            modalCloseXBtn.addEventListener('click', closeSettingsModal);
         }
     }
 });
