@@ -70,7 +70,7 @@
         stepIndex: 0,
         table: T.createTable(),
         snapshots: [], // table as it was before each step's changes, for Back
-        mode: 'read', // read | pick (tap a card) | choice | trick-wait | trick-play | done | complete
+        mode: 'read', // read | pick (tap a card) | choice | trick-ready | trick-wait | trick-play | done | complete
         trick: null, // { order, plays, pos } while a trick is running
         run: 0, // bumped on every navigation so stale timers know to stop
         timers: new Set(),
@@ -373,9 +373,14 @@
         } else if (state.mode === 'choice') {
             setNav();
             window.focusIfKeyboard?.(dom.options.querySelector('button'));
-        } else {
-            setNav({ hint: 'Watch the table' });
+        } else if (s.trick.leader === 'south') {
+            // You lead, so nothing moves until you tap a card
             startTrick();
+        } else {
+            // Others play first: wait until the player has read the setup and asks for it
+            state.mode = 'trick-ready';
+            setNav({ next: true, nextLabel: 'Play the trick' });
+            window.focusIfKeyboard?.(dom.next);
         }
     }
 
@@ -700,6 +705,12 @@
     dom.backToLevels.addEventListener('click', showLevels);
 
     dom.next.addEventListener('click', () => {
+        if (state.mode === 'trick-ready') {
+            state.mode = 'trick-play';
+            setNav({ hint: 'Watch the table' });
+            startTrick();
+            return;
+        }
         if (state.mode !== 'read' && state.mode !== 'done') return;
         if (state.stepIndex < level().steps.length - 1) enterStep(state.stepIndex + 1);
         else completeLevel();
