@@ -3983,6 +3983,20 @@ input:focus-visible + .slider,
     font-weight: 700;
 }
 
+.tut-prompt {
+    padding: 8px 12px;
+    border-left: 3px solid var(--color-yellow);
+    border-radius: 6px;
+    background: var(--color-yellow-alpha-20);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.tut-prompt:empty {
+    display: none;
+}
+
 .tut-feedback {
     padding: 8px 12px;
     border-left: 3px solid var(--color-orange);

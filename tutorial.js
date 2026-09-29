@@ -20,7 +20,7 @@
     const progressStore = window.EuchreStorage.createStore();
 
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-    const FIRST_PLAY_DELAY = reducedMotion ? 150 : 500;
+    const FIRST_PLAY_DELAY = reducedMotion ? 150 : 900;
     const PLAY_DELAY = reducedMotion ? 250 : 750;
     const RESOLVE_DELAY = reducedMotion ? 250 : 650;
 
@@ -51,6 +51,7 @@
         showcase: $('tut-showcase'),
         hand: $('tut-hand'),
         say: $('tut-say'),
+        prompt: $('tut-prompt'),
         feedback: $('tut-feedback'),
         options: $('tut-options'),
         prev: $('tut-prev'),
@@ -300,6 +301,11 @@
         dom.say.replaceChildren(richText(text));
     }
 
+    function setPrompt(text = '') {
+        dom.prompt.replaceChildren();
+        if (text) appendInline(dom.prompt, text);
+    }
+
     function setFeedback(text = '') {
         dom.feedback.replaceChildren();
         if (text) appendInline(dom.feedback, text);
@@ -321,6 +327,7 @@
     /** The step's interaction is finished: show the payoff and let them move on. */
     function finishStep(text) {
         state.mode = 'done';
+        setPrompt();
         if (text) setSay(text);
         dom.hand.classList.remove('is-active');
         renderHand();
@@ -352,6 +359,7 @@
         dom.eyebrow.textContent = `Level ${state.levelIndex + 1} of ${T.LEVELS.length}`;
         setProgress(index / level().steps.length);
         setSay(s.say);
+        setPrompt();
         setFeedback();
         renderTable();
         renderOptions();
@@ -464,8 +472,9 @@
         const seat = order[pos];
         if (seat === 'south') {
             state.mode = 'trick-wait';
-            if (trick.prompt) setSay(trick.prompt);
-            setNav({ hint: 'Your turn: tap a card' });
+            // Keep the lesson text up; the prompt gets its own line under it
+            setPrompt(trick.prompt || (pos === 0 ? 'Your lead: tap a card.' : 'Your turn: tap a card.'));
+            setNav();
             renderHand();
             applyHighlights();
             focusFirstHandCard();
@@ -596,6 +605,7 @@
         setFeedback();
         dom.options.hidden = false;
         dom.hand.classList.remove('is-active');
+        setPrompt();
         setSay(level().outro);
         renderCelebration();
 
