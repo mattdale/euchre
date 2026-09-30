@@ -3046,7 +3046,9 @@ input:focus-visible + .slider,
 /* ═══ How to Play ═════════════════════════════════════════════════════════
    Landing-page button plus the full-screen tutorial (tutorial.js). Cards here
    are .tut-card, not .card, so the game's fan and deal rules never apply.
-   Sizes hang off --cw (card width); everything else is on a 4px grid. */
+   Sizes hang off --cw (card width); everything else is on a 4px grid. Type
+   follows the game's scale: Instrument Sans at 400 for text, 500 for buttons
+   and 600 for labels and headings (the game never goes to 700). */
 
 .how-to-play-btn {
     position: absolute;
@@ -3292,7 +3294,7 @@ input:focus-visible + .slider,
     place-items: center;
     border-radius: 50%;
     background: var(--color-purple-dark);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.125rem;
 }
 
@@ -3493,7 +3495,7 @@ input:focus-visible + .slider,
 
 .tut-celebrate-title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--color-yellow);
     text-align: center;
     line-height: 1.2;
@@ -3565,7 +3567,7 @@ input:focus-visible + .slider,
     background: var(--color-yellow);
     color: var(--color-bg-dark);
     font-size: 0.6875rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -3660,7 +3662,7 @@ input:focus-visible + .slider,
     background: var(--color-yellow);
     color: var(--color-bg-dark);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     animation: tut-pop 0.3s ease-out;
 }
@@ -3782,7 +3784,7 @@ input:focus-visible + .slider,
     align-items: center;
     gap: 2px;
     font-size: max(0.625rem, 28cqi);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1;
 }
 
@@ -3841,7 +3843,7 @@ input:focus-visible + .slider,
     display: inline-flex;
     align-items: center;
     vertical-align: -0.15em;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tut-chip {
@@ -3912,7 +3914,7 @@ input:focus-visible + .slider,
     background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 100%);
     box-shadow: 0 0 0 2px var(--color-yellow), 0 4px 12px var(--color-shadow-40);
     color: var(--color-red);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.125rem;
     line-height: 1;
     rotate: -6deg;
@@ -3934,7 +3936,7 @@ input:focus-visible + .slider,
 
 .tut-coach-name {
     font-size: 0.8125rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--color-yellow);
     line-height: 1.2;
 }
@@ -3966,7 +3968,7 @@ input:focus-visible + .slider,
 
 .tut-say strong {
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tut-prompt {
@@ -4062,7 +4064,7 @@ input:focus-visible + .slider,
     min-height: 44px;
     padding: 8px 20px;
     border-radius: 8px;
-    font: 600 1rem 'Instrument Sans', sans-serif;
+    font: 500 1rem 'Instrument Sans', sans-serif;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
