@@ -47,7 +47,7 @@ Figures are per second of wall-clock time on the 4× throttled CPU. At 186 ms/s,
 
 These items are ranked by impact. None of them causes jank today.
 
-1. **The turn-indicator pulse on opponents still repaints each frame** while the AI is thinking. It animates `background-color` and text `color`, and it accounts for most of the 6.9 s of style work per hand, which is about 2% of a real phone CPU. The background could move to an opacity-animated layer, like the MAKER badge. The text color flip is what keeps it on the main thread, so it needs a small design call: keep the text one color, or cross-fade two text layers.
+1. ~~**The turn-indicator pulse on opponents still repaints each frame.**~~ Fixed when the player labels took on the tutorial's look: the turn cue is now a yellow ring on its own layer that only animates `opacity`, and the text stays one color.
 2. **The Start button shine** is a `background-position` animation that repaints the button 60 times a second, but only on the start screen, about 9% of a throttled CPU. Rebuilding it as a translated gradient layer would make it free. That's worth doing if the start screen ever becomes a place people linger.
 3. **Euchre and game-over GIFs are fetched from Giphy and Tenor when the overlay opens.** They're 0.3–3 MB each, so on a slow connection the overlay can show an empty box for a second. Prefetching the chosen GIF when the last trick starts, or self-hosting short MP4/WebP loops, would fix it.
 4. **`game.js` ships unminified,** at 150 KB raw and 34 KB gzip. That's fine without a build step. Minifying would save roughly 15 KB gzip if a build step is ever added.

@@ -164,7 +164,7 @@
             steps: [
                 {
                     table: { ...CLEAR, hands: EMPTY_TABLE },
-                    say: "Hey, I'm Jack. Yes, like the card. In Euchre, Jacks are kind of a big deal. Give me a few minutes and you'll play like you grew up with it."
+                    say: "Hey, I'm Jackie. Yes, named after the card. In Euchre, Jacks are kind of a big deal. Give me a few minutes and you'll play like you grew up with it."
                 },
                 {
                     seats: ['south', 'north'],
@@ -559,7 +559,7 @@
             id: 'advanced',
             title: 'Going Alone',
             blurb: 'Loners for big points, stopping them, and getting stuck as dealer.',
-            outro: "That's the whole game. Go take on the table! Tip: Beginner Mode in the settings highlights trump while you're getting comfortable.",
+            outro: "That's the whole game. Go take on the table! Tip: in a real game, the trump suit sits in the corners of the table so you never lose track of it.",
             steps: [
                 {
                     table: { ...CLEAR, hands: FULL_TABLE },

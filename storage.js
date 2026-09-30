@@ -35,7 +35,6 @@
     const DEFAULT_SETTINGS = Object.freeze({
         winningScore: 10,
         stickTheDealer: true,
-        beginnerMode: false,
         difficulty: 'intense'
     });
 
@@ -61,7 +60,6 @@
         return {
             winningScore: WINNING_SCORES.includes(s.winningScore) ? s.winningScore : DEFAULT_SETTINGS.winningScore,
             stickTheDealer: typeof s.stickTheDealer === 'boolean' ? s.stickTheDealer : DEFAULT_SETTINGS.stickTheDealer,
-            beginnerMode: typeof s.beginnerMode === 'boolean' ? s.beginnerMode : DEFAULT_SETTINGS.beginnerMode,
             difficulty: DIFFICULTIES.includes(s.difficulty) ? s.difficulty : DEFAULT_SETTINGS.difficulty
         };
     }

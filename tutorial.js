@@ -182,15 +182,20 @@
         }
         const card = T.parseCard(code);
         el.classList.add(isRed(card.suit) ? 'red' : 'black');
-        if (state.table.trump && Rules.isCardTrump(card, state.table.trump)) el.classList.add('is-trump');
         el.dataset.code = code;
         el.setAttribute('role', 'img');
         el.setAttribute('aria-label', cardName(code));
-        const corner = document.createElement('span');
-        corner.className = 'tut-card-corner';
-        corner.setAttribute('aria-hidden', 'true');
-        corner.append(card.value, suitIcon(card.suit));
-        el.append(corner, suitIcon(card.suit, 'tut-card-pip'));
+        // Same face as the game's cards: value over suit in the top corner, mirrored in the bottom one
+        const corner = () => {
+            const span = document.createElement('span');
+            span.className = 'tut-card-corner';
+            span.setAttribute('aria-hidden', 'true');
+            span.append(card.value, suitIcon(card.suit));
+            return span;
+        };
+        const bottom = corner();
+        bottom.classList.add('is-bottom');
+        el.append(corner(), bottom);
         return el;
     }
 
@@ -220,8 +225,8 @@
         const hand = t.hands[seat];
         const mini = el.querySelector('.tut-mini-hand');
         const cards = Array.isArray(hand) ? hand.map(code => createCard(code)) : Array.from({ length: out ? 0 : hand }, () => createCard(null, { faceDown: true }));
+        cards.forEach((card, i) => card.style.setProperty('--fan', i - (cards.length - 1) / 2));
         mini.replaceChildren(...cards);
-        mini.classList.toggle('is-face-up', Array.isArray(hand));
         mini.setAttribute('aria-label', Array.isArray(hand) ? '' : `${hand} ${hand === 1 ? 'card' : 'cards'}`);
     }
 

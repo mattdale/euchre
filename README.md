@@ -3,7 +3,7 @@
 A (slightly spicy) Euchre game built for fun.
 
 ## ✨ Features
-- **How to Play:** Five coached lessons on a practice table, from "what's a trick?" to going alone. Jack the coach explains, you play the cards, and finished levels are remembered.
+- **How to Play:** Five coached lessons on a practice table, from "what's a trick?" to going alone. Jackie the coach explains, you play the cards, and finished levels are remembered.
 - **AI Opponents:** Play alongside and against computer-controlled players that understand the nuances of Euchre strategy (set to Intense mode by default).
 - **Classic Rules:** Supports the classic mechanics: Stick the Dealer, Going Alone, and standard trump bidding phases.
 - **Picks Up Where You Left Off:** Settings are remembered, and a reload resumes your game from the last completed hand.

@@ -342,7 +342,6 @@ h1 {
 .player-info {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    will-change: background-color, box-shadow;
     transform: translateZ(0); /* Force hardware acceleration to prevent SVG jitter during animations */
 }
 
@@ -351,24 +350,21 @@ h1 {
     backface-visibility: hidden;
 }
 
-/* ── North & South — horizontal capsule pinned to top/bottom edge ─────────── */
+/* ── Player labels: the same floating tag as the tutorial's seat labels ─── */
+/* Purple for your team, burgundy for the opponents, 8px in from the edge.   */
 .player-position.north .player-info,
 .player-position.south .player-info {
     position: absolute;
     z-index: 20000;
     background-color: var(--color-purple-dark);
     width: max-content;
-    padding: 8px 16px;
+    padding: 4px 12px;
     height: auto;
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 4px 15px var(--color-shadow-50);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--color-shadow-40);
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.player-position.south .player-info {
-    border-radius: 4px 4px 0px 0px;
 }
 
 .player-position.north .player-name,
@@ -381,106 +377,82 @@ h1 {
 }
 
 .player-position.north .player-info {
-    top: 0px;
+    top: 8px;
 }
 
 .player-position.south .player-info {
-    bottom: 0px;
+    bottom: 8px;
 }
 
-/* ── West — vertical capsule pinned to left edge, text rotated 90° ─────────── */
-.player-position.west .player-info {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 20000;
-    background-color: var(--color-burgundy);
-    padding: 8px 16px;
-    border-radius: 0px 4px 4px 0px;
-    box-shadow: -4px 0 15px var(--color-shadow-30);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateY(-50%);
-}
-
-/* ── East — vertical capsule pinned to right edge, text rotated 90° ────────── */
+.player-position.west .player-info,
 .player-position.east .player-info {
     position: absolute;
-    right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 20000;
     background-color: var(--color-burgundy);
-    padding: 8px 16px;
-    border-radius: 4px 0px 0px 4px;
-    box-shadow: -4px 0 15px var(--color-shadow-30);
+    padding: 4px 12px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--color-shadow-40);
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-/* North & South Background Pulsing for Active Turn */
-@keyframes pulseNSBackground {
+.player-position.west .player-info {
+    left: 8px;
+}
 
-    0%,
-    100% {
-        background-color: var(--color-purple-dark);
-        box-shadow: 0 4px 15px var(--color-shadow-50);
+.player-position.east .player-info {
+    right: 8px;
+}
+
+/* Whose turn: the tutorial's yellow ring. It lives on its own layer and only
+   its opacity animates, so the pulse runs on the compositor instead of
+   repainting the label every frame. */
+.player-info::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--color-yellow), 0 0 16px var(--color-yellow-alpha-50);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.player-info:has(.turn-indicator.active)::after {
+    opacity: 1;
+    animation: turnGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes turnGlow {
+    from {
+        opacity: 1;
     }
 
-    50% {
-        background-color: var(--color-yellow);
-        box-shadow: 0 0 20px var(--color-yellow-alpha-60);
+    to {
+        opacity: 0.45;
     }
 }
 
-.player-position.north .player-info:has(.turn-indicator.active) {
-    animation: pulseNSBackground 2s infinite alternate !important;
-}
-
-/* North Text Pulsing (complements the yellow background) */
-@keyframes pulseNSText {
-
-    0%,
-    100% {
-        color: var(--color-light);
-    }
-
-    50% {
-        color: var(--color-bg-dark);
-    }
-}
-
-.player-position.north:has(.turn-indicator.active) .player-name {
-    animation: pulseNSText 2s infinite alternate !important;
-    text-shadow: none !important;
-}
-
-/* East & West Background Pulsing — matches North/South style */
-.player-position.east .player-info:has(.turn-indicator.active),
-.player-position.west .player-info:has(.turn-indicator.active) {
-    animation: pulseNSBackground 2s infinite alternate !important;
-}
-
-.player-position.east:has(.turn-indicator.active) .player-name,
-.player-position.west:has(.turn-indicator.active) .player-name {
-    animation: pulseNSText 2s infinite alternate !important;
-    text-shadow: none !important;
-}
-
-/* Dealer badge */
-.dealer-badge {
-    font-size: 0.75rem;
-    background-color: var(--color-primary);
-    color: var(--color-bg-dark);
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 4px;
-    font-weight: 600;
+/* Dealer and maker badges: small caps tags inside the label, as in the tutorial */
+.dealer-badge,
+.maker-badge {
+    position: relative;
     display: none;
-    line-height: normal;
+    padding: 0 6px;
+    border-radius: 4px;
+    color: var(--color-bg-dark);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+.dealer-badge {
+    background-color: var(--color-yellow);
 }
 
 .dealer-badge.active {
@@ -489,16 +461,7 @@ h1 {
 
 .maker-badge {
     background-color: var(--color-light);
-    color: var(--color-bg-dark);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 6px;
-    display: none;
-    position: relative;
     box-shadow: 0 0 5px var(--color-purple-alpha-50);
-    line-height: normal;
 }
 
 /* The pulsing glow lives on its own layer and only its opacity animates, so it runs on
@@ -529,43 +492,6 @@ h1 {
     }
 }
 
-/* Stack dealer badge vertically for West and East players */
-.player-position.west .dealer-badge,
-.player-position.east .dealer-badge {
-    display: none;
-    /* Hidden by default */
-    margin-top: 0;
-    margin-left: 4px;
-    transform: none;
-    width: auto;
-    padding: 4px 8px;
-    height: auto;
-    line-height: normal;
-}
-
-.player-position.west .dealer-badge.active,
-.player-position.east .dealer-badge.active {
-    display: inline-flex !important;
-    /* Use flex for proper centering */
-    justify-content: center;
-    align-items: center;
-}
-
-/* Stack maker badge vertically for West and East players as well */
-.player-position.west .maker-badge,
-.player-position.east .maker-badge {
-    margin-top: 0;
-    margin-left: 4px;
-}
-
-.player-position.west .maker-badge.active,
-.player-position.east .maker-badge.active {
-    display: inline-flex !important;
-    justify-content: center;
-    align-items: center;
-}
-
-/* West & East player name — inherits vertical writing-mode from parent .player-info */
 .player-position.west .player-name,
 .player-position.east .player-name {
     display: flex;
@@ -574,7 +500,11 @@ h1 {
     align-items: center;
     gap: 6px;
     white-space: nowrap;
-    letter-spacing: 0.04em;
+}
+
+.player-name {
+    font-size: 0.875rem;
+    line-height: 1.4;
 }
 
 .trick-tally {
@@ -843,33 +773,36 @@ h1 {
 }
 
 
+/* Played cards land in front of whoever played them, like the tutorial's
+   table: West's on the left, your partner's above the middle, and so on.
+   --trick-x is how far West and East land from the centre and --trick-y how
+   far north and south do, both in the card's own (pre-scale) units. Later
+   plays stack on top. */
 .trick-card {
+    --trick-x: 6.2rem;
+    --trick-y: 4.4rem;
     position: absolute !important;
     transition: all 0.3s ease;
-    transform: rotate(0deg) !important;
+    transform: translate(var(--dx, 0), var(--dy, 0)) !important;
     scale: 1.4;
 }
 
-/* Horizontal line positioning for trick cards in center */
-.trick-card.play-order-1 {
-    z-index: 1;
-    transform: translateX(-6rem) !important;
+.trick-card.seat-west { --dx: calc(var(--trick-x) * -1); }
+.trick-card.seat-east { --dx: var(--trick-x); }
+.trick-card.seat-north { --dy: calc(var(--trick-y) * -1); }
+.trick-card.seat-south { --dy: var(--trick-y); }
+
+/* Shorter laptop screens: pull north and south in so yours clears your hand */
+@media (max-height: 820px) and (min-width: 481px) {
+    .trick-card {
+        --trick-y: 3.4rem;
+    }
 }
 
-.trick-card.play-order-2 {
-    z-index: 2;
-    transform: translateX(-2rem) !important;
-}
-
-.trick-card.play-order-3 {
-    z-index: 3;
-    transform: translateX(2rem) !important;
-}
-
-.trick-card.play-order-4 {
-    z-index: 4;
-    transform: translateX(6rem) !important;
-}
+.trick-card.play-order-1 { z-index: 1; }
+.trick-card.play-order-2 { z-index: 2; }
+.trick-card.play-order-3 { z-index: 3; }
+.trick-card.play-order-4 { z-index: 4; }
 
 /* Trump Corner Icons */
 .trump-corner-icons {
@@ -1100,20 +1033,6 @@ h1 {
     z-index: 14;
 }
 
-
-/* Trump card highlighting — only visible in Beginner Mode */
-body.beginner-mode .card.is-trump {
-    border: 2px solid var(--color-yellow) !important;
-    box-shadow:
-        inset 0 0 15px var(--color-yellow-alpha-20),
-        0 4px 12px var(--color-yellow-alpha-30) !important;
-}
-
-body.beginner-mode .card.is-trump:hover {
-    box-shadow:
-        inset 0 0 20px var(--color-yellow-alpha-40),
-        0 12px 25px var(--color-yellow-alpha-50) !important;
-}
 
 /* Trump pickup highlight for dealer */
 .card.trump-pickup {
@@ -1755,25 +1674,9 @@ body.beginner-mode .card.is-trump:hover {
         display: none;
     }
 
-    /* At tablet widths, reduce the trick card spread so it fits horizontally and scale down 10% */
+    /* At tablet widths, scale the played cards down 10% */
     .trick-card {
         scale: 1.26; /* Reduced 10% from desktop scale of 1.4 */
-    }
-
-    .trick-card.play-order-1 {
-        transform: translateX(-4rem) !important;
-    }
-
-    .trick-card.play-order-2 {
-        transform: translateX(-2rem) !important;
-    }
-
-    .trick-card.play-order-3 {
-        transform: translateX(0rem) !important;
-    }
-
-    .trick-card.play-order-4 {
-        transform: translateX(2rem) !important;
     }
 
     /* Center deck: keep margin:auto so scaling is symmetric around the deck center.
@@ -1811,29 +1714,6 @@ body.beginner-mode .card.is-trump:hover {
         gap: 4px;
     }
 
-    .player-position.west .dealer-badge,
-    .player-position.west .maker-badge,
-    .player-position.east .dealer-badge,
-    .player-position.east .maker-badge {
-        font-size: 0.65rem;
-        padding: 2px 4px 3px 4px;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 0;
-        display: none;
-        line-height: normal;
-    }
-
-    .player-position.west .dealer-badge.active,
-    .player-position.west .maker-badge.active,
-    .player-position.east .dealer-badge.active,
-    .player-position.east .maker-badge.active {
-        display: flex !important;
-        justify-content: center;
-        align-items: center;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
 
     /* Fix user turn dialog layout for tablet/mobile — stack text and actions vertically */
     .user-turn-content {
@@ -2095,38 +1975,12 @@ body.beginner-mode .card.is-trump:hover {
         margin-top: -2.8rem;
     }
 
-    /* ═══ Player Info — compact on mobile ═══ */
-    .player-info {
-        padding: 5px 8px 8px 8px;
-    }
-
+    /* ═══ Player labels — a little tighter on mobile ═══ */
     .player-position.north .player-info,
-    .player-position.south .player-info {
-        padding: 5px 8px 8px 8px;
-    }
-
+    .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 5px 8px;
-    }
-
-    .player-name {
-        font-size: 0.9rem;
-    }
-
-    /* ═══ Badges — stack vertically on mobile ═══ */
-    .player-position.north .player-name,
-    .player-position.south .player-name {
-        flex-direction: row;
-        align-items: end;
-        gap: 8px;
-    }
-
-    .dealer-badge,
-    .maker-badge {
-        font-size: 0.65rem;
-        padding: 3px 4px;
-        margin-left: 0;
+        padding: 4px 8px;
     }
 
 
@@ -2144,28 +1998,14 @@ body.beginner-mode .card.is-trump:hover {
         font-size: 0.7rem;
     }
 
-    /* ═══ Trick cards — larger and evenly spread across full screen width ═══
-       Math (360px screen, scale=0.88 → visual card w=67px):
-       d=3rem (48px). Overlap = 67−48 = 19px ≈ 28% of card width.
-       Group span = 3d = 144px. Equal margins ≈ (360−144−67)/2 ≈ 75px each side. */
+    /* ═══ Trick cards ═══
+       Cards are 76×110 here, drawn at 0.88. West and East sit one card width
+       out and north and south just over half a card height, so the cross is
+       about 205px wide and fits a 320px screen. */
     .trick-card {
+        --trick-x: 4.9rem;
+        --trick-y: 3.6rem;
         scale: 0.88;
-    }
-
-    .trick-card.play-order-1 {
-        transform: translateX(-4.5rem) !important;
-    }
-
-    .trick-card.play-order-2 {
-        transform: translateX(-1.5rem) !important;
-    }
-
-    .trick-card.play-order-3 {
-        transform: translateX(1.5rem) !important;
-    }
-
-    .trick-card.play-order-4 {
-        transform: translateX(4.5rem) !important;
     }
 
     /* ═══ Trick tallies — smaller ═══ */
@@ -2935,11 +2775,15 @@ input:focus-visible + .slider,
     .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 4px 10px;
+        padding: 2px 10px;
     }
 
-    .player-name {
-        font-size: 0.85rem;
+    .player-position.north .player-info {
+        top: 4px;
+    }
+
+    .player-position.south .player-info {
+        bottom: 4px;
     }
 
     /* Nudge the centre up so the dialog fits between it and your hand */
@@ -2955,14 +2799,13 @@ input:focus-visible + .slider,
         transform: scale(1);
     }
 
+    /* Too short for a full cross: north and south only lift and drop a
+       little, overlapping in the middle, while West and East spread wide */
     .trick-card {
+        --trick-x: 4.6rem;
+        --trick-y: 1.5rem;
         scale: 1;
     }
-
-    .trick-card.play-order-1 { transform: translateX(-4.5rem) !important; }
-    .trick-card.play-order-2 { transform: translateX(-1.5rem) !important; }
-    .trick-card.play-order-3 { transform: translateX(1.5rem) !important; }
-    .trick-card.play-order-4 { transform: translateX(4.5rem) !important; }
 
     .trump-candidate-card::before {
         top: -26px;
@@ -3051,16 +2894,14 @@ input:focus-visible + .slider,
         overflow-y: clip;
     }
 
-    .player-position.west .player-info,
-    .player-position.east .player-info {
-        border-radius: 4px;
-    }
 }
 
 /* ═══ How to Play ═════════════════════════════════════════════════════════
    Landing-page button plus the full-screen tutorial (tutorial.js). Cards here
    are .tut-card, not .card, so the game's fan and deal rules never apply.
-   Sizes hang off --cw (card width); everything else is on a 4px grid. */
+   Sizes hang off --cw (card width); everything else is on a 4px grid. Type
+   follows the game's scale: Instrument Sans at 400 for text, 500 for buttons
+   and 600 for labels and headings (the game never goes to 700). */
 
 .how-to-play-btn {
     position: absolute;
@@ -3306,7 +3147,7 @@ input:focus-visible + .slider,
     place-items: center;
     border-radius: 50%;
     background: var(--color-purple-dark);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.125rem;
 }
 
@@ -3418,13 +3259,12 @@ input:focus-visible + .slider,
     .tut-table {
         --cw: 5.25rem;
     }
+}
 
-    .tut-mini-hand .tut-card {
-        --cw: 2rem;
-    }
-
-    .tut-mini-hand .tut-card + .tut-card {
-        margin-left: -1.25rem;
+/* Big screens: the game's own card width, so both tables feel the same size */
+@media (min-width: 1200px) and (min-height: 880px) {
+    .tut-table {
+        --cw: 6rem;
     }
 }
 
@@ -3470,7 +3310,8 @@ input:focus-visible + .slider,
     height: 1rem;
 }
 
-@media (max-width: 400px) {
+/* Narrow tables: just the suit, so the pill clears your partner's label */
+@media (max-width: 400px), (max-height: 500px) and (orientation: landscape) {
     .tut-trump-name {
         display: none;
     }
@@ -3507,7 +3348,7 @@ input:focus-visible + .slider,
 
 .tut-celebrate-title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--color-yellow);
     text-align: center;
     line-height: 1.2;
@@ -3579,7 +3420,7 @@ input:focus-visible + .slider,
     background: var(--color-yellow);
     color: var(--color-bg-dark);
     font-size: 0.6875rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
@@ -3588,25 +3429,53 @@ input:focus-visible + .slider,
     background: var(--color-light);
 }
 
+/* The other seats' hands: overlapped and slightly fanned, about three
+   quarters the size of your cards. --fan is each card's offset from the
+   middle of the hand (set by tutorial.js). Partner holds theirs upright;
+   West and East hold theirs sideways, like the real table. */
 .tut-mini-hand {
+    --mw: calc(var(--cw) * 0.72);
     display: flex;
-    min-height: calc(1.5rem * 1.4);
+    justify-content: center;
+    min-height: calc(var(--mw) * 1.4);
 }
 
 .tut-mini-hand .tut-card {
-    --cw: 1.5rem;
+    --cw: var(--mw);
+    rotate: calc(var(--fan, 0) * 3deg);
+    transform-origin: 50% 0;
 }
 
 .tut-mini-hand .tut-card + .tut-card {
-    margin-left: -0.875rem;
+    margin-left: calc(var(--mw) * -0.62);
 }
 
-.tut-mini-hand.is-face-up .tut-card {
-    --cw: 2.25rem;
+.tut-seat[data-seat="west"] .tut-mini-hand,
+.tut-seat[data-seat="east"] .tut-mini-hand {
+    flex-direction: column;
+    min-height: 0;
+    min-width: calc(var(--mw) * 1.4);
 }
 
-.tut-mini-hand.is-face-up .tut-card + .tut-card {
-    margin-left: -1rem;
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-back,
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-back {
+    width: calc(var(--mw) * 1.4);
+    aspect-ratio: 7 / 5;
+}
+
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-card + .tut-card,
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-card + .tut-card {
+    margin-left: 0;
+    margin-top: calc(var(--mw) * -0.62);
+}
+
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-card {
+    transform-origin: 0 50%;
+    rotate: calc(var(--fan, 0) * -3deg);
+}
+
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-card {
+    transform-origin: 100% 50%;
 }
 
 /* Center: four trick slots around the up card, or a showcase row */
@@ -3674,7 +3543,7 @@ input:focus-visible + .slider,
     background: var(--color-yellow);
     color: var(--color-bg-dark);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     white-space: nowrap;
     animation: tut-pop 0.3s ease-out;
 }
@@ -3768,6 +3637,8 @@ input:focus-visible + .slider,
 }
 
 /* ── Cards ─────────────────────────────────────────────────────────────── */
+/* Drawn to match the game's .card at any size: its proportions below are the
+   game's rem values divided by its 6.05rem width. */
 .tut-card {
     position: relative;
     width: var(--cw);
@@ -3775,50 +3646,64 @@ input:focus-visible + .slider,
     flex: none;
     container-type: inline-size;
     border: 1px solid var(--color-card-border);
-    border-radius: 8px;
+    border-radius: max(4px, calc(var(--cw) * 0.083));
     background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 50%, var(--color-card-gradient-end) 100%);
-    box-shadow: -2px 3px 10px var(--color-shadow-30);
+    box-shadow: -3px 4px 12px var(--color-shadow-20);
     color: var(--color-text-dark);
     user-select: none;
-    transition: box-shadow 0.3s ease, opacity 0.3s ease;
+    transition: box-shadow 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .tut-card.red {
     color: var(--color-red);
 }
 
+/* Same paper grain as the game's cards */
+.tut-card:not(.tut-back)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/></svg>');
+    opacity: 0.8;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
 .tut-card-corner {
     position: absolute;
-    top: 6%;
-    left: 9%;
+    z-index: 1;
+    top: 6cqi;
+    left: 7cqi;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    font-size: max(0.625rem, 28cqi);
-    font-weight: 700;
+    gap: 2cqi;
+    font-size: max(0.75rem, 21cqi);
+    font-weight: 600;
     line-height: 1;
 }
 
 .tut-card-corner .suit-icon {
-    width: 0.8em;
-    height: 0.8em;
+    width: 1.15em;
+    height: 1.15em;
 }
 
-.tut-card-pip {
-    position: absolute;
-    right: 12%;
-    bottom: 10%;
-    width: 44%;
-    height: auto;
+.tut-card-corner.is-bottom {
+    top: auto;
+    left: auto;
+    right: 7cqi;
+    bottom: 6cqi;
+    rotate: 180deg;
 }
 
 .tut-card.tut-back {
+    --dot: max(6px, calc(var(--cw) * 0.165));
     background-color: var(--color-purple-dark);
-    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
-    background-size: 8px 8px;
+    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%),
+        radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
+    background-size: var(--dot) var(--dot);
+    background-position: 0 0, calc(var(--dot) / 2) calc(var(--dot) / 2);
     border-color: var(--color-light);
-    border-radius: 4px;
 }
 
 .tut-card.is-highlight,
@@ -3836,8 +3721,9 @@ input:focus-visible + .slider,
     }
 }
 
+/* Darken rather than fade, so overlapping losers don't show through each other */
 .tut-card.is-dim {
-    opacity: 0.45;
+    filter: brightness(0.5) saturate(0.6);
 }
 
 .is-shake {
@@ -3855,7 +3741,7 @@ input:focus-visible + .slider,
     display: inline-flex;
     align-items: center;
     vertical-align: -0.15em;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tut-chip {
@@ -3926,7 +3812,7 @@ input:focus-visible + .slider,
     background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 100%);
     box-shadow: 0 0 0 2px var(--color-yellow), 0 4px 12px var(--color-shadow-40);
     color: var(--color-red);
-    font-weight: 700;
+    font-weight: 600;
     font-size: 1.125rem;
     line-height: 1;
     rotate: -6deg;
@@ -3948,7 +3834,7 @@ input:focus-visible + .slider,
 
 .tut-coach-name {
     font-size: 0.8125rem;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--color-yellow);
     line-height: 1.2;
 }
@@ -3980,7 +3866,7 @@ input:focus-visible + .slider,
 
 .tut-say strong {
     color: #fff;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .tut-prompt {
@@ -4076,7 +3962,7 @@ input:focus-visible + .slider,
     min-height: 44px;
     padding: 8px 20px;
     border-radius: 8px;
-    font: 600 1rem 'Instrument Sans', sans-serif;
+    font: 500 1rem 'Instrument Sans', sans-serif;
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }

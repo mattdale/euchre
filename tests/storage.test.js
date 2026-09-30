@@ -24,16 +24,20 @@ describe('settings', () => {
 
     test('round-trips valid settings', () => {
         const store = S.createStore(fakeStorage());
-        const settings = { winningScore: 15, stickTheDealer: false, beginnerMode: true, difficulty: 'casual' };
+        const settings = { winningScore: 15, stickTheDealer: false, difficulty: 'casual' };
         store.saveSettings(settings);
         assert.deepEqual(store.loadSettings(), settings);
     });
 
     test('replaces invalid fields with defaults', () => {
         assert.deepEqual(
-            S.sanitizeSettings({ winningScore: 99, stickTheDealer: 'yes', difficulty: 'godlike', beginnerMode: true }),
-            { ...S.DEFAULT_SETTINGS, beginnerMode: true }
+            S.sanitizeSettings({ winningScore: 99, stickTheDealer: 'yes', difficulty: 'godlike' }),
+            S.DEFAULT_SETTINGS
         );
+    });
+
+    test('drops the retired beginnerMode setting', () => {
+        assert.deepEqual(S.sanitizeSettings({ ...S.DEFAULT_SETTINGS, beginnerMode: true }), S.DEFAULT_SETTINGS);
     });
 
     test('survives corrupt JSON', () => {
