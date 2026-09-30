@@ -342,7 +342,6 @@ h1 {
 .player-info {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    will-change: background-color, box-shadow;
     transform: translateZ(0); /* Force hardware acceleration to prevent SVG jitter during animations */
 }
 
@@ -351,24 +350,21 @@ h1 {
     backface-visibility: hidden;
 }
 
-/* ── North & South — horizontal capsule pinned to top/bottom edge ─────────── */
+/* ── Player labels: the same floating tag as the tutorial's seat labels ─── */
+/* Purple for your team, burgundy for the opponents, 8px in from the edge.   */
 .player-position.north .player-info,
 .player-position.south .player-info {
     position: absolute;
     z-index: 20000;
     background-color: var(--color-purple-dark);
     width: max-content;
-    padding: 8px 16px;
+    padding: 4px 12px;
     height: auto;
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 4px 15px var(--color-shadow-50);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--color-shadow-40);
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.player-position.south .player-info {
-    border-radius: 4px 4px 0px 0px;
 }
 
 .player-position.north .player-name,
@@ -381,106 +377,82 @@ h1 {
 }
 
 .player-position.north .player-info {
-    top: 0px;
+    top: 8px;
 }
 
 .player-position.south .player-info {
-    bottom: 0px;
+    bottom: 8px;
 }
 
-/* ── West — vertical capsule pinned to left edge, text rotated 90° ─────────── */
-.player-position.west .player-info {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 20000;
-    background-color: var(--color-burgundy);
-    padding: 8px 16px;
-    border-radius: 0px 4px 4px 0px;
-    box-shadow: -4px 0 15px var(--color-shadow-30);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateY(-50%);
-}
-
-/* ── East — vertical capsule pinned to right edge, text rotated 90° ────────── */
+.player-position.west .player-info,
 .player-position.east .player-info {
     position: absolute;
-    right: 0;
     top: 50%;
     transform: translateY(-50%);
     z-index: 20000;
     background-color: var(--color-burgundy);
-    padding: 8px 16px;
-    border-radius: 4px 0px 0px 4px;
-    box-shadow: -4px 0 15px var(--color-shadow-30);
+    padding: 4px 12px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px var(--color-shadow-40);
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-/* North & South Background Pulsing for Active Turn */
-@keyframes pulseNSBackground {
+.player-position.west .player-info {
+    left: 8px;
+}
 
-    0%,
-    100% {
-        background-color: var(--color-purple-dark);
-        box-shadow: 0 4px 15px var(--color-shadow-50);
+.player-position.east .player-info {
+    right: 8px;
+}
+
+/* Whose turn: the tutorial's yellow ring. It lives on its own layer and only
+   its opacity animates, so the pulse runs on the compositor instead of
+   repainting the label every frame. */
+.player-info::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--color-yellow), 0 0 16px var(--color-yellow-alpha-50);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.player-info:has(.turn-indicator.active)::after {
+    opacity: 1;
+    animation: turnGlow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes turnGlow {
+    from {
+        opacity: 1;
     }
 
-    50% {
-        background-color: var(--color-yellow);
-        box-shadow: 0 0 20px var(--color-yellow-alpha-60);
+    to {
+        opacity: 0.45;
     }
 }
 
-.player-position.north .player-info:has(.turn-indicator.active) {
-    animation: pulseNSBackground 2s infinite alternate !important;
-}
-
-/* North Text Pulsing (complements the yellow background) */
-@keyframes pulseNSText {
-
-    0%,
-    100% {
-        color: var(--color-light);
-    }
-
-    50% {
-        color: var(--color-bg-dark);
-    }
-}
-
-.player-position.north:has(.turn-indicator.active) .player-name {
-    animation: pulseNSText 2s infinite alternate !important;
-    text-shadow: none !important;
-}
-
-/* East & West Background Pulsing — matches North/South style */
-.player-position.east .player-info:has(.turn-indicator.active),
-.player-position.west .player-info:has(.turn-indicator.active) {
-    animation: pulseNSBackground 2s infinite alternate !important;
-}
-
-.player-position.east:has(.turn-indicator.active) .player-name,
-.player-position.west:has(.turn-indicator.active) .player-name {
-    animation: pulseNSText 2s infinite alternate !important;
-    text-shadow: none !important;
-}
-
-/* Dealer badge */
-.dealer-badge {
-    font-size: 0.75rem;
-    background-color: var(--color-primary);
-    color: var(--color-bg-dark);
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 4px;
-    font-weight: 600;
+/* Dealer and maker badges: small caps tags inside the label, as in the tutorial */
+.dealer-badge,
+.maker-badge {
+    position: relative;
     display: none;
-    line-height: normal;
+    padding: 0 6px;
+    border-radius: 4px;
+    color: var(--color-bg-dark);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+    text-transform: uppercase;
+}
+
+.dealer-badge {
+    background-color: var(--color-yellow);
 }
 
 .dealer-badge.active {
@@ -489,16 +461,7 @@ h1 {
 
 .maker-badge {
     background-color: var(--color-light);
-    color: var(--color-bg-dark);
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-left: 6px;
-    display: none;
-    position: relative;
     box-shadow: 0 0 5px var(--color-purple-alpha-50);
-    line-height: normal;
 }
 
 /* The pulsing glow lives on its own layer and only its opacity animates, so it runs on
@@ -529,43 +492,6 @@ h1 {
     }
 }
 
-/* Stack dealer badge vertically for West and East players */
-.player-position.west .dealer-badge,
-.player-position.east .dealer-badge {
-    display: none;
-    /* Hidden by default */
-    margin-top: 0;
-    margin-left: 4px;
-    transform: none;
-    width: auto;
-    padding: 4px 8px;
-    height: auto;
-    line-height: normal;
-}
-
-.player-position.west .dealer-badge.active,
-.player-position.east .dealer-badge.active {
-    display: inline-flex !important;
-    /* Use flex for proper centering */
-    justify-content: center;
-    align-items: center;
-}
-
-/* Stack maker badge vertically for West and East players as well */
-.player-position.west .maker-badge,
-.player-position.east .maker-badge {
-    margin-top: 0;
-    margin-left: 4px;
-}
-
-.player-position.west .maker-badge.active,
-.player-position.east .maker-badge.active {
-    display: inline-flex !important;
-    justify-content: center;
-    align-items: center;
-}
-
-/* West & East player name — inherits vertical writing-mode from parent .player-info */
 .player-position.west .player-name,
 .player-position.east .player-name {
     display: flex;
@@ -574,7 +500,11 @@ h1 {
     align-items: center;
     gap: 6px;
     white-space: nowrap;
-    letter-spacing: 0.04em;
+}
+
+.player-name {
+    font-size: 0.875rem;
+    line-height: 1.4;
 }
 
 .trick-tally {
@@ -1797,29 +1727,6 @@ h1 {
         gap: 4px;
     }
 
-    .player-position.west .dealer-badge,
-    .player-position.west .maker-badge,
-    .player-position.east .dealer-badge,
-    .player-position.east .maker-badge {
-        font-size: 0.65rem;
-        padding: 2px 4px 3px 4px;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        margin-bottom: 0;
-        display: none;
-        line-height: normal;
-    }
-
-    .player-position.west .dealer-badge.active,
-    .player-position.west .maker-badge.active,
-    .player-position.east .dealer-badge.active,
-    .player-position.east .maker-badge.active {
-        display: flex !important;
-        justify-content: center;
-        align-items: center;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-    }
 
     /* Fix user turn dialog layout for tablet/mobile — stack text and actions vertically */
     .user-turn-content {
@@ -2081,38 +1988,12 @@ h1 {
         margin-top: -2.8rem;
     }
 
-    /* ═══ Player Info — compact on mobile ═══ */
-    .player-info {
-        padding: 5px 8px 8px 8px;
-    }
-
+    /* ═══ Player labels — a little tighter on mobile ═══ */
     .player-position.north .player-info,
-    .player-position.south .player-info {
-        padding: 5px 8px 8px 8px;
-    }
-
+    .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 5px 8px;
-    }
-
-    .player-name {
-        font-size: 0.9rem;
-    }
-
-    /* ═══ Badges — stack vertically on mobile ═══ */
-    .player-position.north .player-name,
-    .player-position.south .player-name {
-        flex-direction: row;
-        align-items: end;
-        gap: 8px;
-    }
-
-    .dealer-badge,
-    .maker-badge {
-        font-size: 0.65rem;
-        padding: 3px 4px;
-        margin-left: 0;
+        padding: 4px 8px;
     }
 
 
@@ -2921,11 +2802,15 @@ input:focus-visible + .slider,
     .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 4px 10px;
+        padding: 2px 10px;
     }
 
-    .player-name {
-        font-size: 0.85rem;
+    .player-position.north .player-info {
+        top: 4px;
+    }
+
+    .player-position.south .player-info {
+        bottom: 4px;
     }
 
     /* Nudge the centre up so the dialog fits between it and your hand */
@@ -3037,10 +2922,6 @@ input:focus-visible + .slider,
         overflow-y: clip;
     }
 
-    .player-position.west .player-info,
-    .player-position.east .player-info {
-        border-radius: 4px;
-    }
 }
 
 /* ═══ How to Play ═════════════════════════════════════════════════════════
