@@ -3029,6 +3029,9 @@ function renderTrickCard(card, playerIndex) {
     const playOrder = gameState.cardsPlayed + 1;
     cardEl.classList.add(`play-order-${playOrder}`);
 
+    // Land in front of the seat that played it (see .trick-card.seat-* in styles.css)
+    cardEl.classList.add(`seat-${['south', 'west', 'north', 'east'][playerIndex]}`);
+
     // Add the card to the center trick area immediately (no fade)
     trickCardsEl.appendChild(cardEl);
 }

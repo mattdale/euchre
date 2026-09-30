@@ -773,33 +773,36 @@ h1 {
 }
 
 
+/* Played cards land in front of whoever played them, like the tutorial's
+   table: West's on the left, your partner's above the middle, and so on.
+   --trick-x is how far West and East land from the centre and --trick-y how
+   far north and south do, both in the card's own (pre-scale) units. Later
+   plays stack on top. */
 .trick-card {
+    --trick-x: 6.2rem;
+    --trick-y: 4.4rem;
     position: absolute !important;
     transition: all 0.3s ease;
-    transform: rotate(0deg) !important;
+    transform: translate(var(--dx, 0), var(--dy, 0)) !important;
     scale: 1.4;
 }
 
-/* Horizontal line positioning for trick cards in center */
-.trick-card.play-order-1 {
-    z-index: 1;
-    transform: translateX(-6rem) !important;
+.trick-card.seat-west { --dx: calc(var(--trick-x) * -1); }
+.trick-card.seat-east { --dx: var(--trick-x); }
+.trick-card.seat-north { --dy: calc(var(--trick-y) * -1); }
+.trick-card.seat-south { --dy: var(--trick-y); }
+
+/* Shorter laptop screens: pull north and south in so yours clears your hand */
+@media (max-height: 820px) and (min-width: 481px) {
+    .trick-card {
+        --trick-y: 3.4rem;
+    }
 }
 
-.trick-card.play-order-2 {
-    z-index: 2;
-    transform: translateX(-2rem) !important;
-}
-
-.trick-card.play-order-3 {
-    z-index: 3;
-    transform: translateX(2rem) !important;
-}
-
-.trick-card.play-order-4 {
-    z-index: 4;
-    transform: translateX(6rem) !important;
-}
+.trick-card.play-order-1 { z-index: 1; }
+.trick-card.play-order-2 { z-index: 2; }
+.trick-card.play-order-3 { z-index: 3; }
+.trick-card.play-order-4 { z-index: 4; }
 
 /* Trump Corner Icons */
 .trump-corner-icons {
@@ -1671,25 +1674,9 @@ h1 {
         display: none;
     }
 
-    /* At tablet widths, reduce the trick card spread so it fits horizontally and scale down 10% */
+    /* At tablet widths, scale the played cards down 10% */
     .trick-card {
         scale: 1.26; /* Reduced 10% from desktop scale of 1.4 */
-    }
-
-    .trick-card.play-order-1 {
-        transform: translateX(-4rem) !important;
-    }
-
-    .trick-card.play-order-2 {
-        transform: translateX(-2rem) !important;
-    }
-
-    .trick-card.play-order-3 {
-        transform: translateX(0rem) !important;
-    }
-
-    .trick-card.play-order-4 {
-        transform: translateX(2rem) !important;
     }
 
     /* Center deck: keep margin:auto so scaling is symmetric around the deck center.
@@ -2011,28 +1998,14 @@ h1 {
         font-size: 0.7rem;
     }
 
-    /* ═══ Trick cards — larger and evenly spread across full screen width ═══
-       Math (360px screen, scale=0.88 → visual card w=67px):
-       d=3rem (48px). Overlap = 67−48 = 19px ≈ 28% of card width.
-       Group span = 3d = 144px. Equal margins ≈ (360−144−67)/2 ≈ 75px each side. */
+    /* ═══ Trick cards ═══
+       Cards are 76×110 here, drawn at 0.88. West and East sit one card width
+       out and north and south just over half a card height, so the cross is
+       about 205px wide and fits a 320px screen. */
     .trick-card {
+        --trick-x: 4.9rem;
+        --trick-y: 3.6rem;
         scale: 0.88;
-    }
-
-    .trick-card.play-order-1 {
-        transform: translateX(-4.5rem) !important;
-    }
-
-    .trick-card.play-order-2 {
-        transform: translateX(-1.5rem) !important;
-    }
-
-    .trick-card.play-order-3 {
-        transform: translateX(1.5rem) !important;
-    }
-
-    .trick-card.play-order-4 {
-        transform: translateX(4.5rem) !important;
     }
 
     /* ═══ Trick tallies — smaller ═══ */
@@ -2826,14 +2799,13 @@ input:focus-visible + .slider,
         transform: scale(1);
     }
 
+    /* Too short for a full cross: north and south only lift and drop a
+       little, overlapping in the middle, while West and East spread wide */
     .trick-card {
+        --trick-x: 4.6rem;
+        --trick-y: 1.5rem;
         scale: 1;
     }
-
-    .trick-card.play-order-1 { transform: translateX(-4.5rem) !important; }
-    .trick-card.play-order-2 { transform: translateX(-1.5rem) !important; }
-    .trick-card.play-order-3 { transform: translateX(1.5rem) !important; }
-    .trick-card.play-order-4 { transform: translateX(4.5rem) !important; }
 
     .trump-candidate-card::before {
         top: -26px;
