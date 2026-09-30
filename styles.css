@@ -1101,20 +1101,6 @@ h1 {
 }
 
 
-/* Trump card highlighting — only visible in Beginner Mode */
-body.beginner-mode .card.is-trump {
-    border: 2px solid var(--color-yellow) !important;
-    box-shadow:
-        inset 0 0 15px var(--color-yellow-alpha-20),
-        0 4px 12px var(--color-yellow-alpha-30) !important;
-}
-
-body.beginner-mode .card.is-trump:hover {
-    box-shadow:
-        inset 0 0 20px var(--color-yellow-alpha-40),
-        0 12px 25px var(--color-yellow-alpha-50) !important;
-}
-
 /* Trump pickup highlight for dealer */
 .card.trump-pickup {
     border: 3px solid var(--color-yellow) !important;

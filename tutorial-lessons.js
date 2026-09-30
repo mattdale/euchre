@@ -559,7 +559,7 @@
             id: 'advanced',
             title: 'Going Alone',
             blurb: 'Loners for big points, stopping them, and getting stuck as dealer.',
-            outro: "That's the whole game. Go take on the table! Tip: Beginner Mode in the settings highlights trump while you're getting comfortable.",
+            outro: "That's the whole game. Go take on the table! Tip: in a real game, the trump suit sits in the corners of the table so you never lose track of it.",
             steps: [
                 {
                     table: { ...CLEAR, hands: FULL_TABLE },

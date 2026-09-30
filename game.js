@@ -34,7 +34,6 @@ let gameState = {
     settings: {
         winningScore: 10,
         stickTheDealer: true,
-        beginnerMode: false,
         difficulty: 'intense'
     },
     fastForward: false,
@@ -2539,11 +2538,6 @@ function createCardElement(card, index, faceDown = false) {
         cardEl.classList.add('black');
     }
 
-    // Add trump styling if this is a trump card
-    if (gameState.trumpSuit && isCardTrump(card, gameState.trumpSuit)) {
-        cardEl.classList.add('is-trump');
-    }
-
     // Add trump pickup styling if this is the picked up trump card
     if (card.isTrumpPickup) {
         cardEl.classList.add('trump-pickup');
@@ -3368,7 +3362,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Restore remembered settings and offer to resume a saved game
     gameState.settings = store.loadSettings();
-    document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
     showStartButtons();
 
     // Fast-Forward Easter Egg Logic
@@ -3547,8 +3540,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 settingDifficulty.value = gameState.settings.difficulty;
                 updateDifficultyDescription();
             }
-            const settingBeginnerMode = document.getElementById('setting-beginner-mode');
-            if (settingBeginnerMode) settingBeginnerMode.checked = gameState.settings.beginnerMode;
             renderStats(store.loadStats());
             settingsModal.style.display = 'block';
             settingsModal.classList.add('active');
@@ -3562,11 +3553,6 @@ window.addEventListener('DOMContentLoaded', () => {
             gameState.settings.winningScore = parseInt(settingWinningScore.value, 10);
             gameState.settings.stickTheDealer = settingStickDealer.checked;
             if (settingDifficulty) gameState.settings.difficulty = settingDifficulty.value;
-            const settingBeginnerMode = document.getElementById('setting-beginner-mode');
-            if (settingBeginnerMode) {
-                gameState.settings.beginnerMode = settingBeginnerMode.checked;
-                document.body.classList.toggle('beginner-mode', gameState.settings.beginnerMode);
-            }
             store.saveSettings(gameState.settings);
             closeSettingsModal();
         });

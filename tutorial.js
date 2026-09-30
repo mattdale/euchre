@@ -182,7 +182,6 @@
         }
         const card = T.parseCard(code);
         el.classList.add(isRed(card.suit) ? 'red' : 'black');
-        if (state.table.trump && Rules.isCardTrump(card, state.table.trump)) el.classList.add('is-trump');
         el.dataset.code = code;
         el.setAttribute('role', 'img');
         el.setAttribute('aria-label', cardName(code));
