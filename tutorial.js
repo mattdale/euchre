@@ -219,8 +219,8 @@
         const hand = t.hands[seat];
         const mini = el.querySelector('.tut-mini-hand');
         const cards = Array.isArray(hand) ? hand.map(code => createCard(code)) : Array.from({ length: out ? 0 : hand }, () => createCard(null, { faceDown: true }));
+        cards.forEach((card, i) => card.style.setProperty('--fan', i - (cards.length - 1) / 2));
         mini.replaceChildren(...cards);
-        mini.classList.toggle('is-face-up', Array.isArray(hand));
         mini.setAttribute('aria-label', Array.isArray(hand) ? '' : `${hand} ${hand === 1 ? 'card' : 'cards'}`);
     }
 

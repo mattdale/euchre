@@ -3406,14 +3406,6 @@ input:focus-visible + .slider,
     .tut-table {
         --cw: 5.25rem;
     }
-
-    .tut-mini-hand .tut-card {
-        --cw: 2rem;
-    }
-
-    .tut-mini-hand .tut-card + .tut-card {
-        margin-left: -1.25rem;
-    }
 }
 
 /* Keep the seats close to the cards on very wide screens */
@@ -3576,25 +3568,53 @@ input:focus-visible + .slider,
     background: var(--color-light);
 }
 
+/* The other seats' hands: overlapped and slightly fanned, about three
+   quarters the size of your cards. --fan is each card's offset from the
+   middle of the hand (set by tutorial.js). Partner holds theirs upright;
+   West and East hold theirs sideways, like the real table. */
 .tut-mini-hand {
+    --mw: calc(var(--cw) * 0.72);
     display: flex;
-    min-height: calc(1.5rem * 1.4);
+    justify-content: center;
+    min-height: calc(var(--mw) * 1.4);
 }
 
 .tut-mini-hand .tut-card {
-    --cw: 1.5rem;
+    --cw: var(--mw);
+    rotate: calc(var(--fan, 0) * 3deg);
+    transform-origin: 50% 0;
 }
 
 .tut-mini-hand .tut-card + .tut-card {
-    margin-left: -0.875rem;
+    margin-left: calc(var(--mw) * -0.62);
 }
 
-.tut-mini-hand.is-face-up .tut-card {
-    --cw: 2.25rem;
+.tut-seat[data-seat="west"] .tut-mini-hand,
+.tut-seat[data-seat="east"] .tut-mini-hand {
+    flex-direction: column;
+    min-height: 0;
+    min-width: calc(var(--mw) * 1.4);
 }
 
-.tut-mini-hand.is-face-up .tut-card + .tut-card {
-    margin-left: -1rem;
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-back,
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-back {
+    width: calc(var(--mw) * 1.4);
+    aspect-ratio: 7 / 5;
+}
+
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-card + .tut-card,
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-card + .tut-card {
+    margin-left: 0;
+    margin-top: calc(var(--mw) * -0.62);
+}
+
+.tut-seat[data-seat="west"] .tut-mini-hand .tut-card {
+    transform-origin: 0 50%;
+    rotate: calc(var(--fan, 0) * -3deg);
+}
+
+.tut-seat[data-seat="east"] .tut-mini-hand .tut-card {
+    transform-origin: 100% 50%;
 }
 
 /* Center: four trick slots around the up card, or a showcase row */
