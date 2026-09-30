@@ -164,7 +164,7 @@
             steps: [
                 {
                     table: { ...CLEAR, hands: EMPTY_TABLE },
-                    say: "Hey, I'm Jack. Yes, like the card. In Euchre, Jacks are kind of a big deal. Give me a few minutes and you'll play like you grew up with it."
+                    say: "Hey, I'm Jackie. Yes, named after the card. In Euchre, Jacks are kind of a big deal. Give me a few minutes and you'll play like you grew up with it."
                 },
                 {
                     seats: ['south', 'north'],
