@@ -3261,6 +3261,13 @@ input:focus-visible + .slider,
     }
 }
 
+/* Big screens: the game's own card width, so both tables feel the same size */
+@media (min-width: 1200px) and (min-height: 880px) {
+    .tut-table {
+        --cw: 6rem;
+    }
+}
+
 /* Keep the seats close to the cards on very wide screens */
 .tut-table {
     width: 100%;
@@ -3303,7 +3310,8 @@ input:focus-visible + .slider,
     height: 1rem;
 }
 
-@media (max-width: 400px) {
+/* Narrow tables: just the suit, so the pill clears your partner's label */
+@media (max-width: 400px), (max-height: 500px) and (orientation: landscape) {
     .tut-trump-name {
         display: none;
     }
@@ -3643,7 +3651,7 @@ input:focus-visible + .slider,
     box-shadow: -3px 4px 12px var(--color-shadow-20);
     color: var(--color-text-dark);
     user-select: none;
-    transition: box-shadow 0.3s ease, opacity 0.3s ease;
+    transition: box-shadow 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .tut-card.red {
@@ -3713,8 +3721,9 @@ input:focus-visible + .slider,
     }
 }
 
+/* Darken rather than fade, so overlapping losers don't show through each other */
 .tut-card.is-dim {
-    opacity: 0.45;
+    filter: brightness(0.5) saturate(0.6);
 }
 
 .is-shake {
