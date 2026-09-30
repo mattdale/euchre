@@ -185,11 +185,17 @@
         el.dataset.code = code;
         el.setAttribute('role', 'img');
         el.setAttribute('aria-label', cardName(code));
-        const corner = document.createElement('span');
-        corner.className = 'tut-card-corner';
-        corner.setAttribute('aria-hidden', 'true');
-        corner.append(card.value, suitIcon(card.suit));
-        el.append(corner, suitIcon(card.suit, 'tut-card-pip'));
+        // Same face as the game's cards: value over suit in the top corner, mirrored in the bottom one
+        const corner = () => {
+            const span = document.createElement('span');
+            span.className = 'tut-card-corner';
+            span.setAttribute('aria-hidden', 'true');
+            span.append(card.value, suitIcon(card.suit));
+            return span;
+        };
+        const bottom = corner();
+        bottom.classList.add('is-bottom');
+        el.append(corner(), bottom);
         return el;
     }
 

@@ -3776,6 +3776,8 @@ input:focus-visible + .slider,
 }
 
 /* ── Cards ─────────────────────────────────────────────────────────────── */
+/* Drawn to match the game's .card at any size: its proportions below are the
+   game's rem values divided by its 6.05rem width. */
 .tut-card {
     position: relative;
     width: var(--cw);
@@ -3783,9 +3785,9 @@ input:focus-visible + .slider,
     flex: none;
     container-type: inline-size;
     border: 1px solid var(--color-card-border);
-    border-radius: 8px;
+    border-radius: max(4px, calc(var(--cw) * 0.083));
     background: linear-gradient(135deg, var(--color-light) 0%, var(--color-card-gradient-mid) 50%, var(--color-card-gradient-end) 100%);
-    box-shadow: -2px 3px 10px var(--color-shadow-30);
+    box-shadow: -3px 4px 12px var(--color-shadow-20);
     color: var(--color-text-dark);
     user-select: none;
     transition: box-shadow 0.3s ease, opacity 0.3s ease;
@@ -3795,38 +3797,52 @@ input:focus-visible + .slider,
     color: var(--color-red);
 }
 
+/* Same paper grain as the game's cards */
+.tut-card:not(.tut-back)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.05"/></svg>');
+    opacity: 0.8;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
 .tut-card-corner {
     position: absolute;
-    top: 6%;
-    left: 9%;
+    z-index: 1;
+    top: 6cqi;
+    left: 7cqi;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    font-size: max(0.625rem, 28cqi);
+    gap: 2cqi;
+    font-size: max(0.75rem, 21cqi);
     font-weight: 600;
     line-height: 1;
 }
 
 .tut-card-corner .suit-icon {
-    width: 0.8em;
-    height: 0.8em;
+    width: 1.15em;
+    height: 1.15em;
 }
 
-.tut-card-pip {
-    position: absolute;
-    right: 12%;
-    bottom: 10%;
-    width: 44%;
-    height: auto;
+.tut-card-corner.is-bottom {
+    top: auto;
+    left: auto;
+    right: 7cqi;
+    bottom: 6cqi;
+    rotate: 180deg;
 }
 
 .tut-card.tut-back {
+    --dot: max(6px, calc(var(--cw) * 0.165));
     background-color: var(--color-purple-dark);
-    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
-    background-size: 8px 8px;
+    background-image: radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%),
+        radial-gradient(closest-side, transparent 98%, var(--color-shadow-30) 99%);
+    background-size: var(--dot) var(--dot);
+    background-position: 0 0, calc(var(--dot) / 2) calc(var(--dot) / 2);
     border-color: var(--color-light);
-    border-radius: 4px;
 }
 
 .tut-card.is-highlight,
