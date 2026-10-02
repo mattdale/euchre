@@ -3424,6 +3424,17 @@ window.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('mouseup', stopFastForwardTimer);
         window.addEventListener('touchend', stopFastForwardTimer);
         window.addEventListener('touchcancel', stopFastForwardTimer);
+
+        // A long press on Android opens the context menu (and buzzes) right as
+        // fast-forward kicks in. Swallow it on the table for touch only, so a
+        // desktop right-click still works.
+        let touchHeld = false;
+        gameContainer.addEventListener('touchstart', () => { touchHeld = true; }, { passive: true });
+        window.addEventListener('touchend', () => { touchHeld = false; });
+        window.addEventListener('touchcancel', () => { touchHeld = false; });
+        gameContainer.addEventListener('contextmenu', (e) => {
+            if (touchHeld || e.pointerType === 'touch') e.preventDefault();
+        });
     }
 
     // Populate the center deck so it's visible from the start
