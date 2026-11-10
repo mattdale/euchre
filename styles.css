@@ -461,13 +461,17 @@ h1 {
     display: none;
     /* Right side drops the trailing letter-spacing after the last letter so
        the text sits centred in the tag. */
-    padding: 0 calc(6px - 0.04em) 0 6px;
+    /* Instrument Sans has more room above its capitals than below, so caps
+       centred in the line box sit high. 2px of the 1.1rem height moves from
+       the line box to the top padding: the tag stays the same height and the
+       letters drop 1px to the true middle. */
+    padding: 2px calc(6px - 0.04em) 0 6px;
     border-radius: 4px;
     color: var(--color-bg-dark);
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.04em;
-    line-height: 1.6;
+    line-height: calc(1.1rem - 2px);
     text-transform: uppercase;
 }
 
