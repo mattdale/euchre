@@ -361,6 +361,13 @@ h1 {
     backface-visibility: hidden;
 }
 
+/* Label padding lives in two custom properties so the badge rules below can
+   size the inset around a DEALER/MAKER badge from the same numbers. */
+.player-position .player-info {
+    --label-pad-y: 4px;
+    --label-pad-x: 12px;
+}
+
 /* ── Player labels: the same floating tag as the tutorial's seat labels ─── */
 /* Purple for your team, burgundy for the opponents, 8px in from the edge.   */
 .player-position.north .player-info,
@@ -369,7 +376,7 @@ h1 {
     z-index: 20000;
     background-color: var(--color-purple-dark);
     width: max-content;
-    padding: 4px 12px;
+    padding: var(--label-pad-y) var(--label-pad-x);
     height: auto;
     border-radius: 6px;
     box-shadow: 0 4px 12px var(--color-shadow-40);
@@ -402,7 +409,7 @@ h1 {
     transform: translateY(-50%);
     z-index: 20000;
     background-color: var(--color-burgundy);
-    padding: 4px 12px;
+    padding: var(--label-pad-y) var(--label-pad-x);
     border-radius: 6px;
     box-shadow: 0 4px 12px var(--color-shadow-40);
     display: flex;
@@ -452,7 +459,9 @@ h1 {
 .maker-badge {
     position: relative;
     display: none;
-    padding: 0 6px;
+    /* Right side drops the trailing letter-spacing after the last letter so
+       the text sits centred in the tag. */
+    padding: 0 calc(6px - 0.04em) 0 6px;
     border-radius: 4px;
     color: var(--color-bg-dark);
     font-size: 0.6875rem;
@@ -490,6 +499,14 @@ h1 {
 
 .maker-badge.active {
     display: inline-block;
+}
+
+/* Even inset around a badge. In a row label the badge sits at the right end,
+   so the label's right padding matches the space above and below the badge:
+   the vertical padding plus half the difference between the name's line
+   (0.875rem x 1.4) and the badge (0.6875rem x 1.6), which is 0.0625rem. */
+.player-position .player-info:has(.dealer-badge.active, .maker-badge.active) {
+    padding-right: calc(var(--label-pad-y) + 0.0625rem);
 }
 
 @keyframes makerBadgePulse {
@@ -1725,6 +1742,14 @@ h1 {
         gap: 4px;
     }
 
+    /* Stacked labels put the badge at the bottom, so the bottom padding
+       matches the sides instead of the right. */
+    .player-position.west .player-info:has(.dealer-badge.active, .maker-badge.active),
+    .player-position.east .player-info:has(.dealer-badge.active, .maker-badge.active) {
+        padding-right: var(--label-pad-x);
+        padding-bottom: var(--label-pad-x);
+    }
+
 
     /* Fix user turn dialog layout for tablet/mobile — stack text and actions vertically */
     .user-turn-content {
@@ -1991,7 +2016,8 @@ h1 {
     .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 4px 8px;
+        --label-pad-y: 4px;
+        --label-pad-x: 8px;
     }
 
 
@@ -2786,7 +2812,9 @@ input:focus-visible + .slider,
     .player-position.south .player-info,
     .player-position.west .player-info,
     .player-position.east .player-info {
-        padding: 2px 10px;
+        padding: var(--label-pad-y) var(--label-pad-x);
+        --label-pad-y: 2px;
+        --label-pad-x: 10px;
     }
 
     .player-position.north .player-info {
